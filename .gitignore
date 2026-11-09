@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment — NEVER commit secrets
+.env
+
+# SQLite local DB
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploads (store on S3 in production)
+uploads/
+public/uploads/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# PM2
+.pm2/
