@@ -1053,7 +1053,22 @@ function setAnalyticsPeriod(days){
   analyticsPeriod=days;
   renderTrips();
 }
-function getTrips(){const r=localStorage.getItem('viaara_trips');if(r){try{return JSON.parse(r);}catch(e){}}return JSON.parse(JSON.stringify(DEFAULT_TRIPS));}
+/* ── TRIPS — in-memory cache (loaded from API) ── */
+let _trips=[];
+function getTrips(){return _trips;}
+async function loadTripsFromAPI(){
+  try{
+    const r=await fetch('/api/trips');
+    if(!r.ok)throw new Error('API '+r.status);
+    const data=await r.json();
+    _trips=Array.isArray(data)?data:[];
+  }catch(e){
+    console.warn('[Viaara] Trips API unavailable, using localStorage fallback:',e.message);
+    const raw=localStorage.getItem('viaara_trips');
+    _trips=raw?JSON.parse(raw):JSON.parse(JSON.stringify(DEFAULT_TRIPS));
+  }
+  renderTrips();
+}
 // Safe localStorage write — catches QuotaExceededError and warns the admin
 function safeSetItem(key,value){
   try{
@@ -1068,7 +1083,16 @@ function safeSetItem(key,value){
     }
   }
 }
-function saveTrips(t){safeSetItem('viaara_trips',JSON.stringify(t));}
+function saveTrips(t){_trips=t;safeSetItem('viaara_trips',JSON.stringify(t));}
+
+/* ── TRIPS API helpers ── */
+async function tripsApiCall(method,path,body){
+  const opts={method,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch('/api/trips'+path,opts);
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('API '+r.status));}
+  return r.json();
+}
 
 /* ── GREETING ── */
 function setGreeting(){const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';document.getElementById('greetingText').textContent=g+', Viaara Travels';}
@@ -1081,7 +1105,7 @@ function doLogin(){
     sessionStorage.setItem('viaara_admin','1');
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('app').style.display='block';
-    setGreeting();showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();
+    setGreeting();showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();loadTripsFromAPI();
   }else{document.getElementById('loginError').style.display='block';}
 }
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
@@ -1090,7 +1114,7 @@ if(sessionStorage.getItem('viaara_admin')){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   setGreeting();
-  setTimeout(()=>{showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();},50);
+  setTimeout(()=>{showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();loadTripsFromAPI();},50);
 }
 
 /* ── NAV ── */
@@ -1871,29 +1895,58 @@ function renderDepartures(){
 }
 
 /* ── TOGGLE / DELETE ── */
-function toggleStatus(id){const trips=getTrips(),t=trips.find(x=>x.id===id);if(!t)return;t.status=t.status==='active'||t.status==='upcoming'?'draft':'upcoming';saveTrips(trips);renderTrips();showToast('Trip '+(t.status==='upcoming'?'set to Upcoming':'set to Draft'),'success');}
-function setTripStatus(id,status){const trips=getTrips(),t=trips.find(x=>x.id===id);if(!t)return;t.status=status;saveTrips(trips);renderTrips();const labels={upcoming:'set to Upcoming ✓',draft:'set to Draft',completed:'marked as Completed ✓'};showToast('Trip '+(labels[status]||status),'success');}
+function toggleStatus(id){
+  const t=getTrips().find(x=>x.id===id);if(!t)return;
+  const newStatus=(t.status==='active'||t.status==='upcoming')?'draft':'upcoming';
+  tripsApiCall('PUT','/'+id,{status:newStatus})
+    .then(()=>{loadTripsFromAPI();showToast('Trip '+(newStatus==='upcoming'?'set to Upcoming':'set to Draft'),'success');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
+}
+function setTripStatus(id,status){
+  const labels={upcoming:'set to Upcoming ✓',draft:'set to Draft',completed:'marked as Completed ✓'};
+  tripsApiCall('PUT','/'+id,{status})
+    .then(()=>{loadTripsFromAPI();showToast('Trip '+(labels[status]||status),'success');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
+}
 function deleteTrip(id){
   const hasBookings=getBookings().some(b=>b.tripId===id);
   if(hasBookings){
     if(!confirm('This trip has bookings and cannot be deleted.\n\nArchive it instead? It will be hidden from the public site but all booking records are kept.'))return;
-    const trips=getTrips(),idx=trips.findIndex(t=>t.id===id);
-    if(idx===-1)return;
-    trips[idx].status='archived';
-    saveTrips(trips);
-    renderTrips();
-    showToast('Trip archived (has bookings — cannot delete)','info');
+    tripsApiCall('PUT','/'+id,{status:'archived'})
+      .then(()=>{loadTripsFromAPI();showToast('Trip archived (has bookings — cannot delete)','info');})
+      .catch(e=>showToast('Error: '+e.message,'error'));
     return;
   }
   if(!confirm('Delete this trip? This cannot be undone.'))return;
-  saveTrips(getTrips().filter(t=>t.id!==id));
-  renderTrips();
-  showToast('Trip deleted','error');
+  tripsApiCall('DELETE','/'+id)
+    .then(()=>{loadTripsFromAPI();showToast('Trip deleted','error');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
 }
-function archiveTrip(id){if(!confirm('Archive this trip? It will be hidden from the public site but kept here.'))return;const trips=getTrips();const idx=trips.findIndex(t=>t.id===id);if(idx===-1)return;trips[idx].status='archived';saveTrips(trips);renderTrips();showToast('Trip archived','info');}
-function restoreTrip(id){const trips=getTrips();const idx=trips.findIndex(t=>t.id===id);if(idx===-1)return;trips[idx].status='draft';saveTrips(trips);renderTrips();showToast('Trip restored as Draft','success');}
-function cloneTrip(id){const trips=getTrips(),t=trips.find(x=>x.id===id);if(!t)return;const c=JSON.parse(JSON.stringify(t));c.id=t.id+'-copy-'+Date.now().toString(36);c.title=t.title+' (Copy)';c.status='draft';trips.push(c);saveTrips(trips);renderTrips();showToast('Trip cloned as draft','success');}
-function toggleSpecial(id){const trips=getTrips(),t=trips.find(x=>x.id===id);if(!t)return;t.special=!t.special;saveTrips(trips);renderTrips();showToast(t.special?'Marked as Special ⭐':'Removed from Specials','success');}
+function archiveTrip(id){
+  if(!confirm('Archive this trip? It will be hidden from the public site but kept here.'))return;
+  tripsApiCall('PUT','/'+id,{status:'archived'})
+    .then(()=>{loadTripsFromAPI();showToast('Trip archived','info');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
+}
+function restoreTrip(id){
+  tripsApiCall('PUT','/'+id,{status:'draft'})
+    .then(()=>{loadTripsFromAPI();showToast('Trip restored as Draft','success');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
+}
+function cloneTrip(id){
+  const t=getTrips().find(x=>x.id===id);if(!t)return;
+  const c={...JSON.parse(JSON.stringify(t)),title:t.title+' (Copy)',status:'draft'};
+  delete c.id; delete c.tripId; delete c.displayTripId; delete c.created_at; delete c.updated_at;
+  tripsApiCall('POST','',c)
+    .then(()=>{loadTripsFromAPI();showToast('Trip cloned as draft','success');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
+}
+function toggleSpecial(id){
+  const t=getTrips().find(x=>x.id===id);if(!t)return;
+  tripsApiCall('PUT','/'+id,{special:!t.special})
+    .then(()=>{loadTripsFromAPI();showToast(t.special?'Removed from Specials':'Marked as Special ⭐','success');})
+    .catch(e=>showToast('Error: '+e.message,'error'));
+}
 
 /* ── TRIP FORM ── */
 let itinDayCount=0;
@@ -1940,16 +1993,16 @@ function saveTrip(){
   const title=document.getElementById('fTitle').value.trim(),location=document.getElementById('fLocation').value.trim(),price=document.getElementById('fPrice').value.trim(),duration=document.getElementById('fDuration').value.trim();
   if(!title||!location||!price||!duration){showToast('Fill in required fields','error');return;}
   const oldId=document.getElementById('fId').value;
-  const newId=oldId||(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28)+'-'+Date.now().toString(36));
   const images=[...document.querySelectorAll('#imagesContainer input')].map(i=>i.value.trim()).filter(Boolean);
   const itinerary=[...document.querySelectorAll('#itineraryContainer .itin-day-block')].map((b,i)=>({day:i+1,activities:[...b.querySelectorAll('.itin-activities input')].map(inp=>inp.value.trim()).filter(Boolean)})).filter(d=>d.activities.length>0);
   const included=[...document.querySelectorAll('#includedContainer input')].map(i=>i.value.trim()).filter(Boolean);
   const tags=document.getElementById('fTags').value.split(',').map(s=>s.trim()).filter(Boolean);
   const dates=document.getElementById('fDates').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  const trip={id:newId,title,location,subLocation:location,scope:document.getElementById('fScope').value,intensity:document.getElementById('fIntensity').value,duration,price,completed:parseInt(document.getElementById('fCompleted').value)||0,status:document.getElementById('fStatus').value,images,itinerary,included,tags,dates};
-  let trips=getTrips();
-  if(oldId){const idx=trips.findIndex(t=>t.id===oldId);if(idx!==-1)trips[idx]=trip;else trips.push(trip);}else trips.push(trip);
-  saveTrips(trips);closeTripForm();renderTrips();showToast(oldId?'Trip updated ✓':'Trip added ✓','success');
+  const trip={title,location,subLocation:location,scope:document.getElementById('fScope').value,intensity:document.getElementById('fIntensity').value,duration,price,completed:parseInt(document.getElementById('fCompleted').value)||0,status:document.getElementById('fStatus').value,images,itinerary,included,tags,dates};
+  const isEdit=!!oldId;
+  const call=isEdit?tripsApiCall('PUT','/'+oldId,trip):tripsApiCall('POST','',trip);
+  call.then(()=>{closeTripForm();loadTripsFromAPI();showToast(isEdit?'Trip updated ✓':'Trip added ✓','success');})
+      .catch(e=>showToast('Save failed: '+e.message,'error'));
 }
 
 /* ── TOAST ── */
@@ -2055,11 +2108,12 @@ function saveTripEdit(saveStatus){
     seats:parseInt(document.getElementById('etSeats').value)||null,
     intensity:'Balanced'
   };
-  let trips=getTrips();
-  if(etCurrentId){const idx=trips.findIndex(t=>t.id===etCurrentId);if(idx!==-1)trips[idx]={...trips[idx],...trip,id:etCurrentId};else trips.push({...trip,id:etCurrentId});}
-  else trips.push(trip);
-  saveTrips(trips); closeTripEdit(); showPage('trips');
-  showToast(resolvedStatus==='upcoming'?(etCurrentId?'Trip published ✓':'Trip created & published ✓'):(etCurrentId?'Saved as Draft ✓':'Trip saved as Draft ✓'),'success');
+  const isEdit=!!etCurrentId;
+  const call=isEdit?tripsApiCall('PUT','/'+etCurrentId,trip):tripsApiCall('POST','',trip);
+  call.then(()=>{
+    closeTripEdit(); showPage('trips'); loadTripsFromAPI();
+    showToast(resolvedStatus==='upcoming'?(isEdit?'Trip published ✓':'Trip created & published ✓'):(isEdit?'Saved as Draft ✓':'Trip saved as Draft ✓'),'success');
+  }).catch(e=>showToast('Save failed: '+e.message,'error'));
 }
 function etScrollTo(n){const el=document.getElementById('etsec-'+n);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
 function getDestCount(){

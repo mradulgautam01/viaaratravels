@@ -397,16 +397,26 @@
 
 // ===== TRIP DATA =====
 
-// ── Load trips from admin localStorage (falls back to hardcoded defaults) ──
-function loadTripsFromStorage(){
-  const raw = localStorage.getItem('viaara_trips');
-  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
-  return null;
-}
+// ── Load trips from API ──
 function buildTripsObj(arr){
   const obj = {};
   (arr||[]).forEach(t=>{ if(t.id) obj[t.id] = t; });
   return obj;
+}
+let _tripsArray = [];
+let TRIPS = {};
+async function loadPublicTrips(){
+  try{
+    const r = await fetch('/api/trips/public');
+    if(!r.ok) throw new Error('API '+r.status);
+    const data = await r.json();
+    _tripsArray = Array.isArray(data) ? data : [];
+  }catch(e){
+    console.warn('[Viaara] Trips API unavailable:', e.message);
+    _tripsArray = [];
+  }
+  TRIPS = buildTripsObj(_tripsArray);
+  renderAdminTrips();
 }
 
 const TRIPS_DEFAULT = {
@@ -536,9 +546,7 @@ const TRIPS_DEFAULT = {
   }
 };
 
-// Override with admin data if available
-const _adminTrips = loadTripsFromStorage();
-const TRIPS = _adminTrips ? buildTripsObj(_adminTrips) : TRIPS_DEFAULT;
+// Trips loaded from API on DOMContentLoaded
 
 let carouselIndex = 0;
 let carouselImages = [];
@@ -660,15 +668,12 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); }
 </script>
 
 <script>
-// Render trip cards dynamically from admin inventory.
-// Admin inventory is the ONLY source — no hardcoded fallback.
-(function renderAdminTrips(){
+// Render trip cards dynamically from API data.
+function renderAdminTrips(){
   const grid = document.getElementById('tripsGrid');
   if(!grid) return;
-  const LIVE = new Set(['upcoming','active']);
-  let trips = [];
-  try{ trips = JSON.parse(localStorage.getItem('viaara_trips')||'[]'); }catch(e){}
-  const activeTrips = trips.filter(t => LIVE.has(t.status));
+  // _tripsArray already filtered to upcoming/active by /api/trips/public
+  const activeTrips = _tripsArray;
 
   // Always clear first — grid starts empty in HTML
   if(!activeTrips.length){
@@ -706,7 +711,8 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); }
       </div>
     </div>`;
   }).join('');
-})();
+}
+document.addEventListener('DOMContentLoaded', loadPublicTrips);
 </script>
 
 

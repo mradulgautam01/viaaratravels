@@ -11,6 +11,7 @@ const router = express.Router();
 
 // ── Helpers ───────────────────────────────────────────────────
 const JSON_COLS = ['destinations','departureCities','itinerary','inclusions','exclusions','tags','images','dates'];
+const JSON_OBJ_COLS = ['dateSeats']; // object (not array) JSON cols
 
 function serialize(trip) {
   const t = { ...trip };
@@ -20,6 +21,15 @@ function serialize(trip) {
     }
     if (!t[col]) t[col] = [];
   });
+  JSON_OBJ_COLS.forEach(col => {
+    if (typeof t[col] === 'string') {
+      try { t[col] = JSON.parse(t[col]); } catch { t[col] = {}; }
+    }
+    if (!t[col]) t[col] = {};
+  });
+  // Rename inclusions → included so the frontend field name matches
+  t.included = t.inclusions || [];
+  delete t.inclusions;
   t.special = !!t.special;
   t.displayTripId = t.tripId || templateId(t.prefix || getPrefixForTrip(t));
   return t;
@@ -27,8 +37,13 @@ function serialize(trip) {
 
 function deserialize(body) {
   const t = { ...body };
+  // Rename included → inclusions for the DB column
+  if (t.included !== undefined) { t.inclusions = t.included; delete t.included; }
   JSON_COLS.forEach(col => {
     if (Array.isArray(t[col])) t[col] = JSON.stringify(t[col]);
+  });
+  JSON_OBJ_COLS.forEach(col => {
+    if (t[col] && typeof t[col] === 'object') t[col] = JSON.stringify(t[col]);
   });
   return t;
 }

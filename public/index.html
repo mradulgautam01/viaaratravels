@@ -185,6 +185,14 @@
       .shortlist-grid{grid-template-columns:1fr;}
       .footer-grid{grid-template-columns:1fr;}
     }
+    /* Mobile drawer */
+    .mob-drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:8000;}
+    .mob-drawer-overlay.open{display:block;}
+    .mob-drawer{position:fixed;top:0;right:0;bottom:0;width:72vw;max-width:300px;background:#fff;z-index:8001;transform:translateX(100%);transition:transform 0.3s ease;padding:2rem 1.5rem;display:flex;flex-direction:column;gap:1.25rem;}
+    .mob-drawer.open{transform:translateX(0);}
+    .mob-drawer a{font-family:"DM Sans",sans-serif;font-size:1.0625rem;font-weight:500;color:#1a1a1a;text-decoration:none;padding:0.5rem 0;border-bottom:1px solid #f0f0f0;display:block;}
+    .mob-drawer a:last-child{border-bottom:none;}
+    .mob-drawer .mob-cta{margin-top:auto;background:var(--green);color:#fff;border-radius:10px;padding:0.85rem 1.25rem;text-align:center;font-weight:700;border-bottom:none;}
 
     @media(prefers-reduced-motion:no-preference){
       .fade-up{opacity:0;transform:translateY(20px);transition:opacity 0.6s ease,transform 0.6s ease;}
@@ -366,8 +374,20 @@
     <li><a href="#" class="nav-cta" onclick="event.preventDefault();openEnq()">Get in Touch</a></li>
     <li><a href="admin.html" style="font-size:0.75rem;color:rgba(100,100,100,0.5);text-decoration:none;letter-spacing:0.04em;padding:0.35rem 0.6rem;border:1px solid rgba(0,0,0,0.1);border-radius:6px;transition:all 0.2s;" onmouseover="this.style.color='#555';this.style.borderColor='rgba(0,0,0,0.25)'" onmouseout="this.style.color='rgba(100,100,100,0.5)';this.style.borderColor='rgba(0,0,0,0.1)'">Admin</a></li>
   </ul>
-  <div class="nav-hamburger"><span></span><span></span><span></span></div>
+  <div class="nav-hamburger" onclick="openMobMenu()"><span></span><span></span><span></span></div>
 </nav>
+<!-- Mobile drawer -->
+<div class="mob-drawer-overlay" id="mobOverlay" onclick="closeMobMenu()"></div>
+<div class="mob-drawer" id="mobDrawer">
+  <a href="index.html">Home</a>
+  <a href="upcoming-trips.html">Upcoming Experiences</a>
+  <a href="#why" onclick="closeMobMenu()">Inside Viaara</a>
+  <a href="#" class="mob-cta" onclick="closeMobMenu();openEnq()">Get in Touch</a>
+</div>
+<script>
+function openMobMenu(){document.getElementById('mobDrawer').classList.add('open');document.getElementById('mobOverlay').classList.add('open');}
+function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('open');document.getElementById('mobOverlay').classList.remove('open');}
+</script>
 
 <!-- HERO -->
 <section class="hero">
@@ -699,18 +719,24 @@
 
 // ===== TRIP DATA =====
 
-// ── Load trips from admin localStorage (falls back to hardcoded defaults) ──
-function loadTripsFromStorage(){
-  const raw = localStorage.getItem('viaara_trips');
-  if(raw){ try{ return JSON.parse(raw); }catch(e){} }
-  return null;
-}
+// ── Load trips from API ──
 function buildTripsObj(arr){
   const obj = {};
-  // Only include live trips — draft, archived and completed are not bookable
-  const LIVE = new Set(['upcoming','active']);
-  (arr||[]).filter(t=>t.id&&LIVE.has(t.status)).forEach(t=>{ obj[t.id] = t; });
+  (arr||[]).forEach(t=>{ if(t.id) obj[t.id] = t; });
   return obj;
+}
+async function loadPublicTrips(){
+  try{
+    const r = await fetch('/api/trips/public');
+    if(!r.ok) throw new Error('API '+r.status);
+    const data = await r.json();
+    _tripsArray = Array.isArray(data) ? data : [];
+  }catch(e){
+    console.warn('[Viaara] Trips API unavailable:', e.message);
+    _tripsArray = [];
+  }
+  TRIPS = buildTripsObj(_tripsArray);
+  renderSpecials();
 }
 
 const TRIPS_DEFAULT = {
@@ -840,12 +866,13 @@ const TRIPS_DEFAULT = {
   }
 };
 
-// Override with admin data if available
-const _adminTrips = loadTripsFromStorage();
-const TRIPS = _adminTrips ? buildTripsObj(_adminTrips) : TRIPS_DEFAULT;
+// In-memory trip store — populated from API on load
+let _tripsArray = [];
+let TRIPS = {};
 
 // Pre-build the enquiry form so the modal is ready before any interaction
 document.addEventListener('DOMContentLoaded',()=>{
+  loadPublicTrips(); // load trips from API
   const wrap=document.getElementById('enqFormWrap');
   if(wrap&&!wrap.innerHTML.trim())wrap.innerHTML=buildEnqForm('');
 
@@ -980,22 +1007,19 @@ function slideCarousel(dir) {
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 
 
-/* ── SPECIALS (driven by admin localStorage) ── */
-(function renderSpecials(){
+/* ── SPECIALS (driven by API) ── */
+function renderSpecials(){
   const grid = document.getElementById('specialsGrid');
   const section = document.getElementById('trips');
   if(!grid) return;
   // Hide section by default; only show if we have cards to display
   if(section) section.style.display = 'none';
 
-  const LIVE = new Set(['upcoming','active']);
   const heading = document.getElementById('tripsHeading');
   const subheading = document.getElementById('tripsSubheading');
 
-  // Parse admin trips from localStorage (empty array if missing/corrupt)
-  let adminTrips = [];
-  try{ adminTrips = JSON.parse(localStorage.getItem('viaara_trips')||'[]'); }catch(e){}
-  const liveTrips = adminTrips.filter(t => LIVE.has(t.status));
+  // _tripsArray is already filtered to upcoming/active by /api/trips/public
+  const liveTrips = _tripsArray;
 
   let specials = [];
   let isUpcomingFallback = false;
@@ -1075,7 +1099,7 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); }
 
   // Re-run intersection observer on new cards
   if(typeof obs!=='undefined') document.querySelectorAll('#specialsGrid .fade-up').forEach(el => obs.observe(el));
-})();
+}
 
 </script>
 
@@ -1144,14 +1168,10 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); }
 <script>
 function buildTripOptions(selected){
   let opts='<option value="">Select a destination...</option>';
-  try{
-    const trips=JSON.parse(localStorage.getItem('viaara_trips')||'[]');
-    const live=trips.filter(t=>t.status==='upcoming'||t.status==='active');
-    live.forEach(t=>{
-      const sel=(selected&&t.title===selected)?'selected':'';
-      opts+=`<option value="${t.title.replace(/"/g,'&quot;')}" ${sel}>${t.title}</option>`;
-    });
-  }catch(e){}
+  _tripsArray.forEach(t=>{
+    const sel=(selected&&t.title===selected)?'selected':'';
+    opts+=`<option value="${t.title.replace(/"/g,'&quot;')}" ${sel}>${t.title}</option>`;
+  });
   opts+='<option value="Not sure yet"'+(selected==='Not sure yet'?' selected':'')+'>Not sure yet — help me choose</option>';
   return opts;
 }
