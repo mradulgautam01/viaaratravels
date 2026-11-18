@@ -955,28 +955,48 @@ function openTripModal(id) {
   document.body.style.overflow = 'hidden';
 }
 
-function submitInquiry(){
+async function postLead(payload){
+  try{
+    const r=await fetch('/api/leads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(r.status===201)return {ok:true};
+    let msg='';
+    if(r.status===400){const e=await r.json().catch(()=>({}));msg=e&&typeof e.error==='string'?e.error+'. Please check your details and try again.':'';}
+    else if(r.status===429)msg='Too many requests. Please wait a minute and try again.';
+    return {ok:false,error:msg||'Something went wrong. Please try again, or contact us on WhatsApp.'};
+  }catch(e){
+    return {ok:false,error:'Could not reach the server. Please check your connection and try again.'};
+  }
+}
+
+async function submitInquiry(){
   const name=document.getElementById('inqName').value.trim();
   const phone=document.getElementById('inqPhone').value.trim();
   const msgEl=document.getElementById('inqMsg');
   const btn=document.getElementById('inqBtn');
+  if(btn.disabled)return;
   if(!name||!phone){
     msgEl.style.cssText='display:block;background:#fff3f3;color:#c0675a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;';
     msgEl.textContent='Please enter your name and phone number.';
     return;
   }
   const t=TRIPS[currentModalTripId]||TRIPS_DEFAULT[currentModalTripId];
-  const lead={
+  const payload={
     name, phone, email:'', trip:t?t.title:'Unknown trip',
-    message:'Requested quote via website',
-    date:new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
-    status:'New'
+    message:'Requested quote via website'
   };
-  try{
-    const leads=JSON.parse(localStorage.getItem('viaara_leads')||'[]');
-    leads.unshift(lead);
-    localStorage.setItem('viaara_leads',JSON.stringify(leads));
-  }catch(e){}
+  if(currentModalTripId!==null&&currentModalTripId!==undefined)payload.tripId=String(currentModalTripId);
+  const originalLabel=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Sending…';
+  msgEl.style.display='none';
+  const res=await postLead(payload);
+  if(!res.ok){
+    btn.disabled=false;
+    btn.textContent=originalLabel;
+    msgEl.style.cssText='display:block;background:#fff3f3;color:#c0675a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;';
+    msgEl.textContent=res.error;
+    return;
+  }
   trackAnalytics(currentModalTripId,'click');
   btn.textContent='✓ Sent!';
   btn.style.background='#1f7a4a';
@@ -1197,24 +1217,40 @@ function closeEnq(){
   document.getElementById('enqOverlay').classList.remove('open');
   setTimeout(()=>{document.getElementById('enqFormWrap').innerHTML=buildEnqForm('');},300);
 }
-function submitEnq(e){
+async function submitEnq(e){
   e.preventDefault();
   const f=e.target;
-  const lead={
-    id:Date.now(),
-    date:new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+  const btn=f.querySelector('button[type="submit"]');
+  if(btn.disabled)return;
+  const trip=f.querySelector('select').value||'Not specified';
+  const match=_tripsArray.find(t=>t.title===trip);
+  const payload={
     name:f.querySelector('input[type="text"]').value.trim(),
     phone:f.querySelector('input[type="tel"]').value.trim(),
     email:f.querySelector('input[type="email"]').value.trim(),
-    trip:f.querySelector('select').value||'Not specified',
-    message:f.querySelector('textarea').value.trim(),
-    status:'New'
+    trip,
+    message:f.querySelector('textarea').value.trim()
   };
-  try{
-    const leads=JSON.parse(localStorage.getItem('viaara_leads')||'[]');
-    leads.unshift(lead);
-    localStorage.setItem('viaara_leads',JSON.stringify(leads));
-  }catch(err){}
+  if(match&&match.id!==undefined&&match.id!==null)payload.tripId=String(match.id);
+  let errEl=f.querySelector('.enq-error');
+  if(!errEl){
+    errEl=document.createElement('div');
+    errEl.className='enq-error';
+    errEl.style.cssText='display:none;background:#fff3f3;color:#c0675a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:8px;margin-bottom:0.75rem;';
+    btn.parentNode.insertBefore(errEl,btn);
+  }
+  errEl.style.display='none';
+  const originalLabel=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='Sending…';
+  const res=await postLead(payload);
+  if(!res.ok){
+    btn.disabled=false;
+    btn.textContent=originalLabel;
+    errEl.textContent=res.error;
+    errEl.style.display='block';
+    return;
+  }
   document.getElementById('enqFormWrap').innerHTML=`<div class="enq-success"><div class="enq-success-icon">✅</div><h3>We've got your enquiry!</h3><p>Our team will reach out within 24 hours.<br>Meanwhile, feel free to browse our upcoming trips.</p></div>`;
 }
 </script>

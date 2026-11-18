@@ -4,14 +4,32 @@
 
 const express = require('express');
 const db = require('../db/db');
+const { requireAdmin, publicWriteLimiter } = require('../lib/auth');
 
 const router = express.Router();
 
+const MAX_TRIP_ID_LENGTH = 64;
+const EVENT_TYPES = ['view', 'click'];
+
+function sendServerError(res, action, err) {
+  console.error(`[analytics] Failed to ${action}:`, err);
+  res.status(500).json({ error: 'Internal server error' });
+}
+
 // ── POST /api/analytics — track an event ─────────────────────
-router.post('/', async (req, res) => {
+router.post('/', publicWriteLimiter, async (req, res) => {
   try {
-    const { tripId, type } = req.body; // type: 'view' | 'click'
-    if (!tripId || !type) return res.status(400).json({ error: 'tripId and type required' });
+    const { tripId: rawTripId, type } = req.body || {}; // type: 'view' | 'click'
+    const tripId = typeof rawTripId === 'string' ? rawTripId.trim() : '';
+    if (!tripId || typeof type !== 'string') {
+      return res.status(400).json({ error: 'tripId and type required' });
+    }
+    if (tripId.length > MAX_TRIP_ID_LENGTH) {
+      return res.status(400).json({ error: 'tripId is too long' });
+    }
+    if (!EVENT_TYPES.includes(type)) {
+      return res.status(400).json({ error: "type must be 'view' or 'click'" });
+    }
     await db('analytics').insert({
       tripId,
       type,
@@ -21,12 +39,12 @@ router.post('/', async (req, res) => {
     });
     res.json({ ok: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendServerError(res, 'record event', err);
   }
 });
 
 // ── GET /api/analytics/trip/:tripId — 7-day perf for one trip
-router.get('/trip/:tripId', async (req, res) => {
+router.get('/trip/:tripId', requireAdmin, async (req, res) => {
   try {
     const { tripId } = req.params;
     const now  = Date.now();
@@ -54,12 +72,12 @@ router.get('/trip/:tripId', async (req, res) => {
 
     res.json({ views, clicks, trend });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendServerError(res, 'get trip analytics', err);
   }
 });
 
 // ── GET /api/analytics/summary — all trips performance ───────
-router.get('/summary', async (req, res) => {
+router.get('/summary', requireAdmin, async (req, res) => {
   try {
     const now = Date.now();
     const D14 = 14 * 24 * 60 * 60 * 1000;
@@ -93,7 +111,7 @@ router.get('/summary', async (req, res) => {
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    sendServerError(res, 'get analytics summary', err);
   }
 });
 

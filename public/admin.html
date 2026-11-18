@@ -167,7 +167,7 @@ td{padding:0.7rem 1rem;vertical-align:middle;}
 .sort-menu a:hover{background:var(--bg3);}
 .sort-menu a.active{color:var(--green);font-weight:600;}
 td:first-child{padding-left:1.125rem;}
-.td-img{width:46px;height:38px;border-radius:6px;object-fit:cover;}
+.td-img{width:72px;height:56px;border-radius:6px;object-fit:contain;background:#f5f5f5;}
 .td-trip-name{font-weight:600;font-size:0.875rem;color:var(--text);margin-bottom:0.15rem;}
 .td-trip-loc{font-size:0.75rem;color:var(--text-m);display:flex;align-items:center;gap:0.3rem;}
 .badge{display:inline-flex;align-items:center;padding:0.175rem 0.575rem;border-radius:100px;font-size:0.65rem;font-weight:600;}
@@ -395,7 +395,7 @@ td:first-child{padding-left:1.125rem;}
 /* Photo grid */
 .photo-grid-et{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem;}
 .photo-cell{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:#f0f0f0;}
-.photo-cell img{width:100%;height:100%;object-fit:cover;display:block;}
+.photo-cell img{width:100%;height:100%;object-fit:contain;display:block;}
 .photo-cell-num{position:absolute;top:0.375rem;left:0.375rem;background:rgba(0,0,0,0.55);color:#fff;border-radius:4px;font-size:0.675rem;font-weight:700;padding:0.15rem 0.35rem;}
 .photo-cell-cover{position:absolute;bottom:0;left:0;background:var(--blue);color:#fff;font-size:0.675rem;font-weight:700;padding:0.2rem 0.5rem;}
 .photo-set-cover{position:absolute;bottom:0;left:0;background:rgba(0,0,0,0.55);color:#fff;font-size:0.65rem;font-weight:600;padding:0.2rem 0.45rem;border:none;cursor:pointer;border-radius:0;transition:background 0.15s;}
@@ -556,7 +556,6 @@ td:first-child{padding-left:1.125rem;}
     <div class="form-group"><label>Username</label><input class="form-input" type="text" id="loginUser" placeholder="admin"></div>
     <div class="form-group"><label>Password</label><input class="form-input" type="password" id="loginPass" placeholder="&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;"></div>
     <button class="btn-login" onclick="doLogin()">Sign in &rarr;</button>
-    <div class="login-hint">admin &nbsp;/&nbsp; viaara2024</div>
     <div style="text-align:center;margin-top:1rem;">
       <a href="index.html" style="font-size:0.8125rem;color:var(--text-m);text-decoration:none;">&larr; Back to homepage</a>
     </div>
@@ -1058,7 +1057,8 @@ let _trips=[];
 function getTrips(){return _trips;}
 async function loadTripsFromAPI(){
   try{
-    const r=await fetch('/api/trips');
+    const r=await fetch('/api/trips',{credentials:'same-origin'});
+    if(r.status===401){showLogin();return;}
     if(!r.ok)throw new Error('API '+r.status);
     const data=await r.json();
     _trips=Array.isArray(data)?data:[];
@@ -1087,9 +1087,10 @@ function saveTrips(t){_trips=t;safeSetItem('viaara_trips',JSON.stringify(t));}
 
 /* ── TRIPS API helpers ── */
 async function tripsApiCall(method,path,body){
-  const opts={method,headers:{'Content-Type':'application/json'}};
+  const opts={method,credentials:'same-origin',headers:{'Content-Type':'application/json'}};
   if(body)opts.body=JSON.stringify(body);
   const r=await fetch('/api/trips'+path,opts);
+  if(r.status===401){showLogin();throw new Error('Session expired — please log in again');}
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('API '+r.status));}
   return r.json();
 }
@@ -1098,24 +1099,51 @@ async function tripsApiCall(method,path,body){
 function setGreeting(){const h=new Date().getHours();const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';document.getElementById('greetingText').textContent=g+', Viaara Travels';}
 
 /* ── AUTH ── */
-function doLogin(){
-  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
-  if(u==='admin'&&p==='viaara2024'){
-    document.getElementById('loginError').style.display='none';
-    sessionStorage.setItem('viaara_admin','1');
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    setGreeting();showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();loadTripsFromAPI();
-  }else{document.getElementById('loginError').style.display='block';}
-}
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
-function doLogout(){sessionStorage.removeItem('viaara_admin');window.location.href='index.html';}
-if(sessionStorage.getItem('viaara_admin')){
+function showApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
-  setGreeting();
-  setTimeout(()=>{showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();loadTripsFromAPI();},50);
+  setGreeting();showPage('overview');initChart();updateLeadsBadge();updateBookingsBadge();loadTripsFromAPI();
 }
+function showLogin(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='';
+}
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+
+    if (response.ok) {
+      err.style.display='none';
+      document.getElementById('loginPass').value='';
+      showApp();
+    } else {
+      err.textContent=response.status===429?'Too many attempts. Try again later.':'Invalid username or password';
+      err.style.display='block';
+    }
+  } catch (e) {
+    console.error('Login error:', e);
+    err.style.display='block';
+  }
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
+async function doLogout(){
+  try{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin'});}catch(e){}
+  window.location.href='index.html';
+}
+// Validate the server session on page load
+(async function(){
+  try{
+    const r=await fetch('/api/auth/me',{credentials:'same-origin'});
+    if(r.ok){showApp();}
+  }catch(e){}
+})();
 
 /* ── NAV ── */
 const PAGE_TITLES={overview:'Overview',trips:'Trips Inventory',offers:'Offers',leads:'Leads',enquiries:'Enquiries',reviews:'Reviews',minisite:'Mini-Site',itineraries:'Itineraries',departures:'Departures',bookings:'Bookings',customers:'Customers',followups:'Follow-ups',payments:'Payments',accounts:'Accounts'};
@@ -1137,7 +1165,7 @@ function showPage(page,force){
   document.getElementById('topbarTitle').textContent=PAGE_TITLES[page]||page;
   if(page==='trips')renderTrips();
   else if(page==='departures')renderDepartures();
-  else if(page==='leads')renderLeads();
+  else if(page==='leads')loadLeads();
   else if(page==='reviews')renderReviews();
   else if(page==='bookings')renderBookings();
   updateLeadsBadge();
@@ -1149,50 +1177,69 @@ function ngKeepEditing(){
   etPendingNav=null;
 }
 
-function ngSaveDraft(){
-  // Mirror saveTripEdit() exactly, but control status based on original
+async function ngSaveDraft(){
   const trips=getTrips();
   const existing=etCurrentId?trips.find(t=>t.id===etCurrentId):null;
-  const savedStatus=document.getElementById('fStatus').value; // 'upcoming' | 'draft'
+  const savedStatus=document.getElementById('fStatus').value;
   const wasLive=savedStatus==='upcoming';
 
   const title=document.getElementById('etTitle').value.trim();
-  if(!title){showToast('Please add a trip title first','error');document.getElementById('navGuardModal').style.display='none';etScrollTo(1);return;}
+  if(!title){
+    showToast('Please add a trip title first','error');
+    document.getElementById('navGuardModal').style.display='none';
+    etScrollTo(1);
+    return;
+  }
+
   const days=parseInt(document.getElementById('etDays').value)||0;
   const nights=parseInt(document.getElementById('etNights').value)||0;
   const dur=days?(days+'D'+(nights?' / '+nights+'N':'')):'';
   const destTags=getTagsFrom('etDestTags');
-  const trip={
-    id:etCurrentId||(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28)+'-'+Date.now().toString(36)),
-    title, summary:document.getElementById('etSummary').value.trim(),
-    location:destTags[0]||title.split(':')[0].trim()||'India',
-    subLocation:destTags.join(' · ')||'',
-    departureCities:getTagsFrom('etCityTags'),
-    price:document.getElementById('etPrice').value.trim()||'TBD',
-    completed:parseInt(document.getElementById('etCompleted').value)||0,
-    scope:document.getElementById('etScope').value,
-    duration:dur,
-    status: savedStatus,
-    special:existing?!!existing.special:false,
-    images:etGetPhotos(),
-    itinerary:etGetItinList(),
-    included:etGetList('etInclList'),
-    exclusions:etGetList('etExclList'),
-    tags:[...etSelectedTagsSet],
-    dates:etGetDates(),
-    intensity:'Balanced'
-  };
 
-  if(etCurrentId){const idx=trips.findIndex(t=>t.id===etCurrentId);if(idx!==-1)trips[idx]={...trips[idx],...trip,id:etCurrentId};else trips.push({...trip,id:etCurrentId});}
-  else trips.push(trip);
-  saveTrips(trips);
+  try {
+    const images=await etEnsurePhotoUrls();
 
-  closeTripEdit();
-  document.getElementById('navGuardModal').style.display='none';
-  const target=etPendingNav||'trips';
-  etPendingNav=null;
-  showPage(target,true);
-  showToast(wasLive?'Trip saved ✓':'Saved as Draft ✓','success');
+    const trip={
+      id:etCurrentId||(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28)+'-'+Date.now().toString(36)),
+      title, summary:document.getElementById('etSummary').value.trim(),
+      location:destTags[0]||title.split(':')[0].trim()||'India',
+      subLocation:destTags.join(' Â· ')||'',
+      departureCities:getTagsFrom('etCityTags'),
+      price:document.getElementById('etPrice').value.trim()||'TBD',
+      completed:parseInt(document.getElementById('etCompleted').value)||0,
+      scope:document.getElementById('etScope').value,
+      duration:dur,
+      status:savedStatus,
+      special:existing?!!existing.special:false,
+      images,
+      itinerary:etGetItinList(),
+      included:etGetList('etInclList'),
+      exclusions:etGetList('etExclList'),
+      tags:[...etSelectedTagsSet],
+      dates:etGetDates(),
+      intensity:'Balanced'
+    };
+
+    const isEdit=!!etCurrentId;
+    const call=isEdit
+      ?tripsApiCall('PUT','/'+etCurrentId,trip)
+      :tripsApiCall('POST','',trip);
+
+    await call;
+
+    closeTripEdit();
+    document.getElementById('navGuardModal').style.display='none';
+
+    const target=etPendingNav||'trips';
+    etPendingNav=null;
+    showPage(target,true);
+    loadTripsFromAPI();
+
+    showToast(wasLive?'Trip saved âœ"':'Saved as Draft âœ"','success');
+
+  } catch(e) {
+    showToast('Save failed: '+e.message,'error');
+  }
 }
 
 function ngDiscardEdits(){
@@ -2080,40 +2127,54 @@ function closeTripEdit(){
   document.getElementById('editTripOverlay').style.display='none';
   if(etObserver){etObserver.disconnect();etObserver=null;}
 }
-function saveTripEdit(saveStatus){
+async function saveTripEdit(saveStatus){
   const title=document.getElementById('etTitle').value.trim();
   if(!title){showToast('Trip title is required','error');etScrollTo(1);return;}
+
   const resolvedStatus=saveStatus||'draft';
   const days=parseInt(document.getElementById('etDays').value)||0;
   const nights=parseInt(document.getElementById('etNights').value)||0;
   const dur=days?(days+'D'+(nights?' / '+nights+'N':'')):'';
   const destTags=getTagsFrom('etDestTags');
-  const trip={
-    id:etCurrentId||(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28)+'-'+Date.now().toString(36)),
-    title, summary:document.getElementById('etSummary').value.trim(),
-    location:destTags[0]||title.split(':')[0].trim()||'India',
-    subLocation:destTags.join(' · ')||'',
-    departureCities:getTagsFrom('etCityTags'),
-    price:document.getElementById('etPrice').value.trim()||'TBD',
-    completed:parseInt(document.getElementById('etCompleted').value)||0,
-    scope:document.getElementById('etScope').value,
-    duration:dur, status:resolvedStatus,
-    images:etGetPhotos(),
-    itinerary:etGetItinList(),
-    included:etGetList('etInclList'),
-    exclusions:etGetList('etExclList'),
-    tags:[...etSelectedTagsSet],
-    dates:etGetDates(),
-    dateSeats:etGetDateSeats(),
-    seats:parseInt(document.getElementById('etSeats').value)||null,
-    intensity:'Balanced'
-  };
-  const isEdit=!!etCurrentId;
-  const call=isEdit?tripsApiCall('PUT','/'+etCurrentId,trip):tripsApiCall('POST','',trip);
-  call.then(()=>{
-    closeTripEdit(); showPage('trips'); loadTripsFromAPI();
-    showToast(resolvedStatus==='upcoming'?(isEdit?'Trip published ✓':'Trip created & published ✓'):(isEdit?'Saved as Draft ✓':'Trip saved as Draft ✓'),'success');
-  }).catch(e=>showToast('Save failed: '+e.message,'error'));
+
+  try {
+    const images=await etEnsurePhotoUrls();
+
+    const trip={
+      id:etCurrentId||(title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,28)+'-'+Date.now().toString(36)),
+      title, summary:document.getElementById('etSummary').value.trim(),
+      location:destTags[0]||title.split(':')[0].trim()||'India',
+      subLocation:destTags.join(' Â· ')||'',
+      departureCities:getTagsFrom('etCityTags'),
+      price:document.getElementById('etPrice').value.trim()||'TBD',
+      completed:parseInt(document.getElementById('etCompleted').value)||0,
+      scope:document.getElementById('etScope').value,
+      duration:dur, status:resolvedStatus,
+      images,
+      itinerary:etGetItinList(),
+      included:etGetList('etInclList'),
+      exclusions:etGetList('etExclList'),
+      tags:[...etSelectedTagsSet],
+      dates:etGetDates(),
+      dateSeats:etGetDateSeats(),
+      seats:parseInt(document.getElementById('etSeats').value)||null,
+      intensity:'Balanced'
+    };
+
+    const isEdit=!!etCurrentId;
+    const call=isEdit?tripsApiCall('PUT','/'+etCurrentId,trip):tripsApiCall('POST','',trip);
+
+    await call;
+
+    closeTripEdit();
+    showPage('trips');
+    loadTripsFromAPI();
+
+    showToast(resolvedStatus==='upcoming'?(isEdit?'Trip published âœ"':'Trip created & published âœ"'):(isEdit?'Saved as Draft âœ"':'Trip saved as Draft âœ"'),'success');
+
+  } catch(e) {
+    showToast('Save failed: '+e.message,'error');
+  }
 }
 function etScrollTo(n){const el=document.getElementById('etsec-'+n);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
 function getDestCount(){
@@ -2417,6 +2478,40 @@ function etSetCover(idx){
   showToast('Cover photo updated ✓','success');
 }
 function etGetPhotos(){return[...document.querySelectorAll('#etPhotoGrid .photo-cell img')].map(i=>i.src);}
+async function etEnsurePhotoUrls() {
+  const photos = etGetPhotos();
+  let updated = false;
+
+  for (let i = 0; i < photos.length; i++) {
+    if (!photos[i].startsWith('data:image/')) continue;
+
+    const blob = await (await fetch(photos[i])).blob();
+    const formData = new FormData();
+    const extension = blob.type.split('/')[1] || 'jpg';
+
+    formData.append('image', blob, `trip-image.${extension}`);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      credentials: 'same-origin',
+      body: formData
+    });
+
+    if (response.status === 401) { showLogin(); throw new Error('Session expired — please log in again'); }
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok || !result.url) {
+      throw new Error(result.error || 'Image upload failed');
+    }
+
+    photos[i] = result.url;
+    updated = true;
+  }
+
+  if (updated) etRenderPhotos(photos);
+
+  return photos;
+}
 function etAddPhoto(){
   const inp=document.getElementById('etNewImageUrl'),url=inp.value.trim();
   if(!url)return; const photos=etGetPhotos(); photos.push(url); etRenderPhotos(photos); inp.value='';
@@ -2694,25 +2789,65 @@ function updateBookingsBadge(){
 }
 
 /* -- LEADS -- */
-function updateLeadsBadge(){
-  const leads=JSON.parse(localStorage.getItem('viaara_leads')||'[]');
+let _leads=[];
+let _leadsState='idle'; // idle | loading | loaded | error
+let _leadsError='';
+let _leadsLoadSeq=0;
+const _leadsBusy=new Set(); // lead IDs with an update/delete in flight
+let _leadsBulkBusy=false;
+
+function setLeadsBadge(n){
   const badge=document.querySelector('.sb-item[data-page="leads"] .sb-badge');
   if(!badge)return;
-  const n=leads.filter(l=>l.status==='New').length;
-  badge.textContent=n;
+  badge.textContent=n||'';
   badge.style.display=n?'':'none';
+}
+async function leadsApiCall(method,path,body){
+  const opts={method,credentials:'same-origin'};
+  if(body!==undefined){opts.headers={'Content-Type':'application/json'};opts.body=JSON.stringify(body);}
+  const r=await fetch('/api/leads'+path,opts);
+  if(r.status===401){_leads=[];_leadsState='idle';showLogin();throw new Error('Session expired — please log in again');}
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.error||('Request failed ('+r.status+')'));}
+  return r.json();
+}
+async function updateLeadsBadge(){
+  try{
+    const data=await leadsApiCall('GET','/count/new');
+    setLeadsBadge(Number(data.count)||0);
+  }catch(e){
+    console.warn('[Viaara] Leads badge unavailable:',e.message);
+  }
+}
+async function loadLeads(){
+  const seq=++_leadsLoadSeq;
+  _leadsState='loading';_leadsError='';
+  renderLeads();
+  try{
+    const data=await leadsApiCall('GET','');
+    if(seq!==_leadsLoadSeq)return;
+    if(!Array.isArray(data))throw new Error('Unexpected response from server');
+    _leads=data;
+    _leadsState='loaded';
+  }catch(e){
+    if(seq!==_leadsLoadSeq)return;
+    _leadsState='error';
+    _leadsError=e.message||'Could not load leads';
+  }
+  renderLeads();
 }
 function renderLeads(){
   const wrap=document.getElementById('leadsTableWrap');
   if(!wrap)return;
-  const leads=JSON.parse(localStorage.getItem('viaara_leads')||'[]');
-  // update sidebar badge
-  const badge=document.querySelector('.sb-item[data-page="leads"] .sb-badge');
-  if(badge){
-    const newCount=leads.filter(l=>l.status==='New').length;
-    badge.textContent=newCount||'';
-    badge.style.display=newCount?'':'none';
+  if(_leadsState==='loading'&&!_leads.length){
+    wrap.innerHTML=`<div class="empty-state"><div class="es-icon">&#128101;</div><h3>Loading leads…</h3><p>Please wait.</p></div>`;
+    return;
   }
+  if(_leadsState==='error'){
+    wrap.innerHTML=`<div class="empty-state"><div class="es-icon">&#9888;</div><h3>Could not load leads</h3><p>${escAttr(_leadsError)}</p><button onclick="loadLeads()" style="margin-top:1rem;background:none;border:1.5px solid var(--border);border-radius:8px;padding:0.45rem 1rem;font-size:0.8125rem;color:var(--text-m);cursor:pointer;font-family:inherit;">Retry</button></div>`;
+    return;
+  }
+  const leads=_leads;
+  if(_leadsState==='loaded')setLeadsBadge(leads.filter(l=>l.status==='New').length);
   if(!leads.length){
     wrap.innerHTML=`<div class="empty-state"><div class="es-icon">&#128101;</div><h3>No leads yet</h3><p>When travellers submit an enquiry on the site, they'll appear here.</p></div>`;
     return;
@@ -2738,43 +2873,86 @@ function renderLeads(){
       <th>Name</th><th>Contact</th><th>Trip</th><th>Message</th><th>Date</th><th>Status</th><th></th>
     </tr></thead>
     <tbody>
-      ${leads.map((l,i)=>`<tr>
-        <td><div class="lead-name">${l.name}</div></td>
-        <td><div>${l.phone}</div><div style="font-size:0.8rem;color:var(--text-m)">${l.email}</div></td>
-        <td style="white-space:nowrap">${l.trip}</td>
-        <td><div class="lead-msg" title="${l.message.replace(/"/g,'&quot;')}">${l.message||'—'}</div></td>
-        <td class="lead-date">${l.date}</td>
+      ${leads.map(l=>{
+        const id=Number(l.id);
+        const busy=_leadsBusy.has(id)||_leadsBulkBusy;
+        const dis=busy?' disabled':'';
+        const msg=l.message||'';
+        return `<tr>
+        <td><div class="lead-name">${escAttr(l.name)}</div></td>
+        <td><div>${escAttr(l.phone)}</div><div style="font-size:0.8rem;color:var(--text-m)">${escAttr(l.email)}</div></td>
+        <td style="white-space:nowrap">${escAttr(l.trip)}</td>
+        <td><div class="lead-msg" title="${escAttr(msg)}">${escAttr(msg)||'—'}</div></td>
+        <td class="lead-date">${escAttr(l.date)}</td>
         <td>
-          <select class="lead-status" style="background:${statusColor[l.status]||'#1f7a4a'}1a;color:${statusColor[l.status]||'#1f7a4a'};border:1.5px solid ${statusColor[l.status]||'#1f7a4a'}40;"
-            onchange="updateLeadStatus(${i},this.value,this)">
+          <select class="lead-status" style="background:${statusColor[l.status]||'#1f7a4a'}1a;color:${statusColor[l.status]||'#1f7a4a'};border:1.5px solid ${statusColor[l.status]||'#1f7a4a'}40;${busy?'opacity:0.6;cursor:wait;':''}"
+            onchange="updateLeadStatus(${id},this.value,this)"${dis}>
             ${['New','Contacted','Converted','Closed'].map(s=>`<option value="${s}"${l.status===s?' selected':''}>${s}</option>`).join('')}
           </select>
         </td>
-        <td><button class="lead-del" onclick="deleteLead(${i})" title="Delete">&#10005;</button></td>
-      </tr>`).join('')}
+        <td><button class="lead-del" onclick="deleteLead(${id})" title="Delete"${dis}>&#10005;</button></td>
+      </tr>`;}).join('')}
     </tbody>
   </table>`;
 }
-function updateLeadStatus(idx,status,sel){
-  const leads=JSON.parse(localStorage.getItem('viaara_leads')||'[]');
-  if(!leads[idx])return;
-  leads[idx].status=status;
-  safeSetItem('viaara_leads',JSON.stringify(leads));
-  const statusColor={New:'#1f7a4a',Contacted:'#2563eb',Converted:'#7c3aed',Closed:'#888'};
-  const c=statusColor[status]||'#1f7a4a';
-  sel.style.background=c+'1a'; sel.style.color=c; sel.style.borderColor=c+'40';
-  renderLeads();
+async function updateLeadStatus(id,status,sel){
+  const lead=_leads.find(l=>Number(l.id)===id);
+  if(!lead)return;
+  const previous=lead.status;
+  if(_leadsBusy.has(id)||_leadsBulkBusy||status===previous){sel.value=previous;return;}
+  _leadsBusy.add(id);
+  sel.disabled=true;
+  try{
+    await leadsApiCall('PUT','/'+encodeURIComponent(id),{status});
+    lead.status=status;
+    showToast('Lead status updated','success');
+  }catch(e){
+    sel.value=previous;
+    showToast('Could not update lead: '+e.message,'error');
+  }finally{
+    _leadsBusy.delete(id);
+    if(document.getElementById('leadsTableWrap'))renderLeads();
+  }
 }
-function deleteLead(idx){
-  const leads=JSON.parse(localStorage.getItem('viaara_leads')||'[]');
-  leads.splice(idx,1);
-  safeSetItem('viaara_leads',JSON.stringify(leads));
+async function deleteLead(id){
+  const lead=_leads.find(l=>Number(l.id)===id);
+  if(!lead||_leadsBusy.has(id)||_leadsBulkBusy)return;
+  if(!confirm('Delete this lead? This cannot be undone.'))return;
+  _leadsBusy.add(id);
   renderLeads();
+  try{
+    await leadsApiCall('DELETE','/'+encodeURIComponent(id));
+    _leads=_leads.filter(l=>Number(l.id)!==id);
+    showToast('Lead deleted','success');
+  }catch(e){
+    showToast('Could not delete lead: '+e.message,'error');
+  }finally{
+    _leadsBusy.delete(id);
+    renderLeads();
+  }
 }
-function clearLeads(){
+async function clearLeads(){
+  if(_leadsBulkBusy||_leadsBusy.size)return;
+  if(_leadsState!=='loaded'||!_leads.length)return;
   if(!confirm('Clear all leads? This cannot be undone.'))return;
-  localStorage.removeItem('viaara_leads');
+  _leadsBulkBusy=true;
   renderLeads();
+  const ids=_leads.map(l=>Number(l.id));
+  let failed=0,expired=false;
+  for(const id of ids){
+    try{
+      await leadsApiCall('DELETE','/'+encodeURIComponent(id));
+      _leads=_leads.filter(l=>Number(l.id)!==id);
+    }catch(e){
+      failed++;
+      if(/Session expired/.test(e.message)){expired=true;break;}
+    }
+  }
+  _leadsBulkBusy=false;
+  if(expired)return;
+  if(failed)showToast(failed+' lead(s) could not be deleted','error');
+  else showToast('All leads cleared','success');
+  await loadLeads();
 }
 </script>
 
