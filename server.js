@@ -46,6 +46,9 @@ app.use(express.urlencoded({ extended: true }));
 // ── Static files ──────────────────────────────────────────────
 // Serve the public HTML files
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/policies', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'policies.html'));
+});
 
 // Serve local uploads (only used when STORAGE=local)
 const uploadDir = path.resolve(process.env.LOCAL_UPLOAD_DIR || './uploads');
@@ -74,6 +77,7 @@ app.use(session({
 // Per-route authorization is applied inside each router.
 app.use('/api/auth',      authRouter);
 app.use('/api/trips',     require('./routes/trips'));
+app.use('/api/bookings',  require('./routes/bookings'));
 app.use('/api/leads',     require('./routes/leads'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/upload',    requireAdmin, require('./routes/upload'));

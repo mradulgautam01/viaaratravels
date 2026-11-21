@@ -6,6 +6,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/db');
 const { getPrefixForTrip, templateId } = require('../lib/tripId');
+const { syncDepartures, groupCode } = require('../lib/departures');
 const { requireAdmin } = require('../lib/auth');
 
 const router = express.Router();
@@ -70,7 +71,23 @@ function sameDestinations(a, b) {
 router.get('/', requireAdmin, async (req, res) => {
   try {
     const trips = await db('trips').orderBy('created_at', 'desc');
-    res.json(trips.map(serialize));
+    const departures = await db('departures').orderBy('date', 'asc');
+    const groups = await db('departure_groups').orderBy('number', 'asc');
+    res.json(trips.map(trip => {
+      const result = serialize(trip);
+      if (['upcoming', 'active'].includes(trip.status)) {
+        const items = departures.filter(d => d.tripId === trip.id);
+        const departure = items.length === 1 ? items[0] : null;
+        if (items.length > 1) {
+          result.displayTripId = templateId(trip.prefix || getPrefixForTrip(result));
+        } else if (departure) {
+          const departureGroups = groups.filter(g => g.departureId === departure.id);
+          const current = departureGroups[departureGroups.length - 1];
+          result.displayTripId = current ? groupCode(departure.code, current.number, departureGroups.length > 1) : departure.code;
+        }
+      }
+      return result;
+    }));
   } catch (err) {
     sendServerError(res, 'list trips', err);
   }
@@ -99,6 +116,45 @@ router.get('/instances', requireAdmin, async (req, res) => {
   }
 });
 
+// ── GET /api/trips/suggestions ────────────────────
+// Most-used inclusions/exclusions across saved trips, so the admin form's
+// "Quick add" chips reflect what this operator actually writes rather than a
+// hardcoded list. Must stay above GET /:id or the param route swallows it.
+router.get('/suggestions', requireAdmin, async (req, res) => {
+  try {
+    const trips = await db('trips');
+    const LIMIT = 12;
+
+    const tally = (col) => {
+      const counts = new Map();
+      for (const trip of trips) {
+        let list = trip[col];
+        if (typeof list === 'string') {
+          try { list = JSON.parse(list || '[]'); } catch { continue; }
+        }
+        if (!Array.isArray(list)) continue;
+        for (const raw of list) {
+          const value = String(raw == null ? '' : raw).trim();
+          // Skip blanks and anything too long to sit on a chip.
+          if (!value || value.length > 60) continue;
+          const key = value.toLowerCase();
+          const entry = counts.get(key) || { value, count: 0 };
+          entry.count += 1;
+          counts.set(key, entry);
+        }
+      }
+      return [...counts.values()]
+        .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value))
+        .slice(0, LIMIT)
+        .map((e) => e.value);
+    };
+
+    res.json({ inclusions: tally('inclusions'), exclusions: tally('exclusions') });
+  } catch (err) {
+    sendServerError(res, 'trip suggestions', err);
+  }
+});
+
 // ── GET /api/trips/:id ────────────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
@@ -121,6 +177,12 @@ router.post('/', requireAdmin, async (req, res) => {
     const id = uuidv4();
     const prefix = getPrefixForTrip(req.body);
     const body = deserialize(req.body);
+    delete body.id;
+    delete body.tripId;
+    delete body.displayTripId;
+    if (body.status === 'completed') {
+      return res.status(400).json({ error: 'A trip can be completed only after its full departure groups have finished' });
+    }
 
     const trip = {
       id,
@@ -133,10 +195,14 @@ router.post('/', requireAdmin, async (req, res) => {
       updated_at: db.fn.now(),
     };
 
-    await db('trips').insert(trip);
+    await db.transaction(async trx => {
+      await trx('trips').insert(trip);
+      if (['upcoming', 'active'].includes(trip.status)) await syncDepartures(trx, trip);
+    });
     const created = await db('trips').where({ id }).first();
     res.status(201).json(serialize(created));
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message });
     sendServerError(res, 'create trip', err);
   }
 });
@@ -150,6 +216,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
     const body = deserialize(req.body);
     // The prefix is server-derived; never accept a client-supplied value.
     delete body.prefix;
+    delete body.id;
+    delete body.tripId;
+    delete body.displayTripId;
 
     // Recompute the prefix only when destinations are present and actually changed.
     const update = { ...body, updated_at: db.fn.now() };
@@ -158,11 +227,25 @@ router.put('/:id', requireAdmin, async (req, res) => {
       update.prefix = getPrefixForTrip({ ...existing, ...req.body });
     }
 
-    await db('trips').where({ id: req.params.id }).update(update);
+    await db.transaction(async trx => {
+      if (update.status === 'completed' && existing.status !== 'completed') {
+        const departures = await trx('departures').where({ tripId: req.params.id }).pluck('id');
+        const groups = departures.length ? await trx('departure_groups').whereIn('departureId', departures) : [];
+        if (!groups.length || groups.some(group => group.status !== 'completed')) {
+          const err = new Error('A trip can be completed only after its full departure groups have finished');
+          err.status = 400;
+          throw err;
+        }
+      }
+      await trx('trips').where({ id: req.params.id }).update(update);
+      const trip = await trx('trips').where({ id: req.params.id }).first();
+      if (['upcoming', 'active'].includes(trip.status)) await syncDepartures(trx, trip);
+    });
     const updated = await db('trips').where({ id: req.params.id }).first();
     if (!updated) return res.status(404).json({ error: 'Trip not found' });
     res.json(serialize(updated));
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message });
     sendServerError(res, 'update trip', err);
   }
 });
@@ -170,9 +253,23 @@ router.put('/:id', requireAdmin, async (req, res) => {
 // ── DELETE /api/trips/:id ──────────────────────────────────────
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
-    await db('trips').where({ id: req.params.id }).delete();
+    await db.transaction(async trx => {
+      const departures = await trx('departures').where({ tripId: req.params.id }).pluck('id');
+      if (departures.length) {
+        const groups = await trx('departure_groups').whereIn('departureId', departures).pluck('id');
+        if (groups.length && await trx('bookings').whereIn('groupId', groups).first('id')) {
+          const err = new Error('Trips with bookings cannot be deleted; archive the trip instead');
+          err.status = 400;
+          throw err;
+        }
+        await trx('departure_groups').whereIn('departureId', departures).del();
+        await trx('departures').whereIn('id', departures).del();
+      }
+      await trx('trips').where({ id: req.params.id }).delete();
+    });
     res.json({ ok: true });
   } catch (err) {
+    if (err.status === 400) return res.status(400).json({ error: err.message });
     sendServerError(res, 'delete trip', err);
   }
 });

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Policies &amp; Information · Viaara Travels</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{margin:0;background:#faf9f6;color:#0f1311;font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased;}
+    a{color:#155433;}
+    a:focus-visible,select:focus-visible{outline:2px solid #1f7a4a;outline-offset:3px;}
+    .page-header{background:#0f1913;color:#fff;padding:1.25rem clamp(20px,4vw,64px);}
+    .brand{display:flex;align-items:center;}
+    .brand img{display:block;width:48px;height:48px;border-radius:50%;object-fit:cover;}
+    .header-inner,.layout,.section-nav-inner,.page-footer{width:min(1200px,100%);margin:auto;}
+    .header-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+    .home-link{color:rgba(255,255,255,0.85);font-size:0.875rem;text-decoration:none;}
+    .home-link:hover{color:#fff;}
+    .section-nav{position:sticky;top:0;z-index:10;background:rgba(250,249,246,0.97);border-bottom:1px solid rgba(15,19,17,0.12);backdrop-filter:blur(16px);}
+    .section-nav-inner{padding:0 clamp(20px,4vw,64px);}
+    .section-links{display:flex;gap:clamp(20px,3vw,40px);flex-wrap:wrap;}
+    .section-links a{padding:1rem 0;color:#155433;font-size:0.875rem;font-weight:600;text-decoration:none;}
+    .section-links a:hover{text-decoration:underline;}
+    .mobile-selector{display:none;}
+    .layout{padding:clamp(48px,7vw,88px) clamp(20px,4vw,64px) 96px;}
+    .intro,.policy-section,.contact{max-width:760px;}
+    .eyebrow{margin:0 0 0.75rem;color:#1f7a4a;font-size:0.75rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;}
+    h1,h2{font-family:"Fraunces",Georgia,serif;font-weight:400;line-height:1.15;letter-spacing:-0.015em;color:#1f7a4a;}
+    h1{font-size:clamp(2.5rem,5vw,4rem);margin:0 0 1.5rem;}
+    h2{font-size:clamp(2rem,4vw,3rem);margin:0 0 0.75rem;}
+    h3{font-size:1.0625rem;line-height:1.4;margin:2rem 0 0.65rem;}
+    p{margin:0 0 1rem;}
+    ul{padding-left:1.4rem;margin:0 0 1rem;}
+    li{padding-left:0.2rem;margin-bottom:0.35rem;}
+    .notice{background:#eef7f2;border-left:3px solid #1f7a4a;padding:1rem 1.25rem;margin:1.5rem 0;}
+    .notice p:last-child{margin-bottom:0;}
+    .policy-section,.contact{padding-top:3rem;margin-top:3rem;border-top:1px solid rgba(15,19,17,0.14);scroll-margin-top:6rem;}
+    .updated{font-size:0.875rem;color:#5b625e;margin-bottom:1.75rem;}
+    .page-footer{padding:2rem clamp(20px,4vw,64px);border-top:1px solid rgba(15,19,17,0.1);font-size:0.875rem;}
+    @media(max-width:640px){
+      .section-links{display:none;}
+      .mobile-selector{display:block;padding:0.75rem 0;}
+      .mobile-selector label{display:block;font-size:0.75rem;font-weight:600;margin-bottom:0.25rem;}
+      .mobile-selector select{width:100%;padding:0.65rem;background:#fff;border:1px solid rgba(15,19,17,0.25);font:inherit;color:#0f1311;}
+      .policy-section{scroll-margin-top:7rem;}
+    }
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+  </style>
+</head>
+<body id="top">
+<header class="page-header">
+  <div class="header-inner">
+    <a class="brand" href="/"><img src="/media/viaara-logo.png" alt="Viaara"></a>
+    <a class="home-link" href="/">Back to homepage &rarr;</a>
+  </div>
+</header>
+
+<nav class="section-nav" aria-label="Policy sections">
+  <div class="section-nav-inner">
+    <div class="section-links">
+      <a href="#terms">Terms &amp; Conditions</a>
+      <a href="#privacy">Privacy Policy</a>
+      <a href="#cancellation">Cancellation &amp; Refund Policy</a>
+    </div>
+    <div class="mobile-selector">
+      <label for="policy-selector">Jump to a section</label>
+      <select id="policy-selector">
+        <option value="">Select a section</option>
+        <option value="terms">Terms &amp; Conditions</option>
+        <option value="privacy">Privacy Policy</option>
+        <option value="cancellation">Cancellation &amp; Refund Policy</option>
+      </select>
+    </div>
+  </div>
+</nav>
+
+<main class="layout">
+  <div class="intro">
+    <p class="eyebrow">Viaara Travels</p>
+    <h1>Policies &amp; Information</h1>
+    <div class="notice"><strong>Draft for review.</strong> The privacy policy and cancellation schedule are incomplete and require confirmation and approval before publication.</div>
+    <p>Welcome to Viaara Travels.</p>
+    <p>At Viaara, we believe every journey should begin with clarity and transparency. Whether you're travelling solo, joining a group of strangers, or exploring a new destination, we want you to understand the important terms, booking conditions, and travel responsibilities before confirming your trip.</p>
+    <p>Please read the following policies carefully before making a booking.</p>
+  </div>
+
+  <section class="policy-section" id="terms">
+    <h2>1. Terms &amp; Conditions</h2>
+    <div class="notice"><strong>Draft for review.</strong> Not approved for publication.</div>
+    <p class="updated">Last updated: November 20, 2026</p>
+    <p>These Terms &amp; Conditions apply to participants booking and joining trips organized by Viaara Travels. By completing a booking and participating in a trip, you acknowledge that you have read, understood, and accepted these conditions.</p>
+
+    <h3>1.1 Booking &amp; Registration</h3>
+    <ul>
+      <li>A booking is considered confirmed only after successful registration and payment of the applicable booking amount.</li>
+      <li>Participants must provide accurate registration details and the required identification documents.</li>
+      <li>The booking amount forms part of the total trip package cost wherever specified in the respective itinerary.</li>
+      <li>The registration amount is non-refundable where identified as such in the respective trip package.</li>
+      <li>The remaining trip balance must be paid before departure. Individual trip payment instructions may specify payment of the remaining amount at departure time.</li>
+      <li>Failure to complete the required payment may result in cancellation of the booking without a refund.</li>
+    </ul>
+
+    <h3>1.2 Identification &amp; Travel Documents</h3>
+    <ul>
+      <li>Every participant must carry a valid government-issued photo identification document throughout the journey.</li>
+      <li>International travellers must carry a valid passport and visa.</li>
+      <li>Participants must carry the same identification document used during registration.</li>
+      <li>Travel tickets are non-transferable.</li>
+      <li>Participants below 18 years of age must submit a signed No Objection Certificate (NOC) from a parent or legal guardian.</li>
+    </ul>
+
+    <h3>1.3 Accommodation</h3>
+    <ul>
+      <li>Accommodation is provided on a sharing basis, according to the package and availability.</li>
+      <li>Room-sharing arrangements depend on the selected package, such as double, triple, or quad sharing.</li>
+      <li>Accommodation is subject to availability.</li>
+      <li>Air-conditioned rooms may not be available at hill destinations.</li>
+    </ul>
+
+    <h3>1.4 Transportation &amp; Travel Arrangements</h3>
+    <ul>
+      <li>Transportation and transfers are provided according to the inclusions mentioned in the respective trip itinerary.</li>
+      <li>Participants must follow the designated pickup points, departure schedules, and instructions communicated for their trip.</li>
+      <li>Certain destinations have road restrictions or vehicle-access limitations.</li>
+      <li>In such cases, the main vehicle may be parked at a designated parking area, and participants may need to continue on foot or use local transportation.</li>
+      <li>Local transportation required outside the planned arrangements may be at the participant's own expense, as specified in the itinerary.</li>
+    </ul>
+
+    <h3>1.5 Itinerary &amp; Schedule Changes</h3>
+    <ul>
+      <li>Trip itineraries and schedules may change due to weather conditions, road conditions, safety concerns, operational requirements, or other unforeseen circumstances.</li>
+      <li>Certain sightseeing locations, mountain routes, treks, and activities may be subject to weather conditions, road accessibility, snowfall, permits, and government regulations.</li>
+      <li>Viaara Travels may modify the itinerary when necessary for operational or safety reasons.</li>
+      <li>Participants acknowledge that planned activities and schedules may be affected by circumstances beyond the control of Viaara Travels.</li>
+    </ul>
+
+    <h3>1.6 Health, Fitness &amp; Medical Disclosure</h3>
+    <ul>
+      <li>Participants must ensure that they are medically fit to undertake the selected trip.</li>
+      <li>Any pre-existing medical condition, allergy, or special requirement must be disclosed to Viaara Travels before the trip.</li>
+      <li>Participants are responsible for any undisclosed medical condition or emergency arising during the journey.</li>
+      <li>Travel insurance is not included in the trip package. Participants are advised to arrange their own travel insurance.</li>
+    </ul>
+
+    <h3>1.7 Participant Responsibilities &amp; Conduct</h3>
+    <p>Every participant is expected to maintain responsible and respectful behaviour throughout the journey.</p>
+    <p>Participants must:</p>
+    <ul>
+      <li>Follow instructions issued by the Trip Captain and authorized representatives of Viaara Travels.</li>
+      <li>Follow applicable instructions and safety requirements issued by local authorities.</li>
+      <li>Respect fellow travellers, local communities, accommodation providers, and other service personnel.</li>
+      <li>Take responsibility for their personal belongings, valuables, travel documents, and luggage.</li>
+      <li>Avoid behaviour that may compromise the safety, comfort, or experience of other participants.</li>
+    </ul>
+    <p>Misconduct, harassment, illegal activities, alcohol or drug abuse, or damage to property may result in immediate removal from the trip without any refund.</p>
+    <p>Viaara Travels reserves the right to refuse or discontinue participation on medical, safety, legal, or behavioural grounds.</p>
+
+    <h3>1.8 Activities &amp; Third-Party Services</h3>
+    <ul>
+      <li>Optional activities operated by third-party vendors are undertaken at the participant's own discretion and risk.</li>
+      <li>Any activity or service not specifically listed under the package inclusions is not included in the package price.</li>
+      <li>Participants are responsible for understanding the arrangements and applicable charges for optional activities.</li>
+    </ul>
+
+    <h3>1.9 Inclusions &amp; Exclusions</h3>
+    <p>Each trip has its own specific list of inclusions and exclusions.</p>
+    <p>Participants should review the respective itinerary before booking.</p>
+    <p>Services not specifically mentioned under the inclusions section should be considered excluded from the package.</p>
+    <p>Additional expenses may include, where applicable:</p>
+    <ul>
+      <li>Personal expenses.</li>
+      <li>Meals not mentioned in the itinerary.</li>
+      <li>Entry tickets and activity charges.</li>
+      <li>Local transportation outside planned arrangements.</li>
+      <li>Private cabs.</li>
+      <li>Personal trekking gear and equipment.</li>
+      <li>Additional club or water-sports charges.</li>
+      <li>Expenses arising from weather conditions, roadblocks, or natural calamities.</li>
+    </ul>
+    <p>The exact inclusions and exclusions depend on the selected trip.</p>
+
+    <h3>1.10 Delays, Disruptions &amp; Unforeseen Circumstances</h3>
+    <p>Viaara Travels is not responsible for delays, cancellations, route changes, accidents, injuries, loss of belongings, or additional expenses arising from circumstances beyond its control, including:</p>
+    <ul>
+      <li>Adverse weather conditions.</li>
+      <li>Traffic delays.</li>
+      <li>Strikes.</li>
+      <li>Natural disasters.</li>
+      <li>Government restrictions.</li>
+      <li>Other unforeseen circumstances.</li>
+    </ul>
+
+    <h3>1.11 Missed Services &amp; Activities</h3>
+    <p>No refund will be provided for services, activities, meals, or sightseeing missed due to personal reasons or late arrival.</p>
+
+    <h3>1.12 Assumption of Risk &amp; Participant Declaration</h3>
+    <p>Adventure travel and group journeys involve inherent risks, including accidents, illness, injuries, delays, weather conditions, altitude-related challenges, and unforeseen circumstances.</p>
+    <p>By participating in a trip, participants acknowledge these risks and voluntarily accept responsibility for their participation.</p>
+    <p>Participants confirm that they are medically fit for the selected trip and agree to follow all instructions issued by the Trip Captain and Viaara Travels representatives.</p>
+    <p>Participants also acknowledge that they are responsible for their personal belongings, valuables, documents, and luggage throughout the journey.</p>
+    <p>The participant declaration includes an assumption of risk and an indemnity in favour of Viaara Travels, its employees, trip leaders, and representatives, subject to applicable law.</p>
+  </section>
+
+  <section class="policy-section" id="privacy">
+    <h2>2. Privacy Policy</h2>
+    <div class="notice"><strong>Draft for review.</strong> Not approved for publication.</div>
+    <p class="updated">Last updated: November 20, 2026</p>
+    <p>Your privacy matters to us.</p>
+    <p>Viaara Travels believes in maintaining transparency when dealing with customers and trip participants.</p>
+    <div class="notice">
+      <p><strong>Important publication note:</strong> The currently supplied Viaara trip documents do not specify the personal information collected through the website or booking process, how it is used, how long it is retained, or whether it is shared with third parties.</p>
+      <p>Accordingly, a complete Privacy Policy cannot yet be established from the available documents. The following is the section that needs to be completed and approved before publication.</p>
+    </div>
+    <h3>2.1 Information Collected</h3>
+    <p>The information collected from visitors and customers has not been specified in the supplied documentation.</p>
+    <h3>2.2 Use of Personal Information</h3>
+    <p>The purposes for which customer and participant information is used have not been specified in the supplied documentation.</p>
+    <h3>2.3 Information Sharing</h3>
+    <p>The supplied documentation does not specify whether personal information is shared with accommodation providers, transportation providers, activity operators, payment providers, or other third parties.</p>
+    <h3>2.4 Payment Information</h3>
+    <p>The supplied documentation does not specify how payment information is collected, processed, or stored.</p>
+    <h3>2.5 Data Storage &amp; Security</h3>
+    <p>The supplied documentation does not specify data retention periods or the security measures used to protect customer information.</p>
+    <h3>2.6 Cookies &amp; Website Technologies</h3>
+    <p>The supplied documentation does not specify whether the Viaara website uses cookies, analytics, or other tracking technologies.</p>
+    <h3>2.7 Privacy Enquiries</h3>
+    <p>For general enquiries, you can contact Viaara Travels:</p>
+    <p>Email: <a href="mailto:viaaratravels@gmail.com">viaaratravels@gmail.com</a><br>Phone: +91 8920943378 / +91 8800624119</p>
+    <p>A complete privacy policy should be published after Viaara confirms its actual website, registration, payment, and data-handling practices.</p>
+  </section>
+
+  <section class="policy-section" id="cancellation">
+    <h2>3. Cancellation &amp; Refund Policy</h2>
+    <div class="notice"><strong>Draft for review.</strong> The cancellation schedule is incomplete and not approved for publication.</div>
+    <p class="updated">Last updated: November 20, 2026</p>
+    <p>Viaara Travels aims to make booking and payment conditions clear before participants confirm their journeys.</p>
+    <p>Please carefully review the payment and refund conditions applicable to your selected trip.</p>
+    <h3>3.1 Registration Amount</h3>
+    <ul>
+      <li>Certain trip packages require an advance registration amount to reserve a participant's seat.</li>
+      <li>The registration amount is explicitly identified as non-refundable in the relevant trip itineraries.</li>
+      <li>Where specified in the itinerary, the registration amount is adjusted against the total trip package cost.</li>
+      <li>The exact registration amount and payment conditions may differ between trips.</li>
+    </ul>
+    <p>For example, the supplied Udaipur and Chakrata itineraries specify a registration amount of ₹2,000 per person as non-refundable.</p>
+    <h3>3.2 Remaining Payment</h3>
+    <ul>
+      <li>The remaining trip balance must be paid before departure.</li>
+      <li>Certain trip packages specify that the remaining balance is payable at departure time.</li>
+      <li>Failure to complete the required payment may result in cancellation without a refund.</li>
+    </ul>
+    <p>Participants should follow the payment instructions communicated for their specific booking.</p>
+    <h3>3.3 Participant-Initiated Cancellation</h3>
+    <p>The supplied trip documents specify that the registration amount is non-refundable where stated in the package.</p>
+    <p>However, they do not establish a complete cancellation schedule for the remaining package amount.</p>
+    <p>The following details are not specified in the available documents:</p>
+    <ul>
+      <li>Cancellation charges based on the number of days before departure.</li>
+      <li>Refund eligibility for the remaining amount.</li>
+      <li>Cancellation deadlines.</li>
+      <li>Refund processing timelines.</li>
+      <li>Conditions for transferring a booking to another participant.</li>
+      <li>Rescheduling or date-change provisions.</li>
+    </ul>
+    <p>These conditions should not be assumed and must be formally established by Viaara Travels before publishing a definitive cancellation schedule.</p>
+    <h3>3.4 Missed Services &amp; Late Arrival</h3>
+    <p>No refund will be provided for services, activities, meals, or sightseeing missed due to personal reasons or late arrival.</p>
+    <p>Participants are responsible for arriving at the designated boarding points and following the communicated departure schedules.</p>
+    <h3>3.5 Removal From a Trip</h3>
+    <p>Viaara Travels reserves the right to refuse or discontinue participation due to medical, safety, legal, or behavioural reasons.</p>
+    <p>Misconduct, harassment, illegal activities, alcohol or drug abuse, or damage to property may result in immediate removal from the trip without any refund.</p>
+    <h3>3.6 Weather, Roadblocks &amp; Unforeseen Circumstances</h3>
+    <p>Trip itineraries and schedules may change due to weather conditions, road conditions, safety concerns, government restrictions, or other unforeseen circumstances.</p>
+    <p>Additional expenses arising from weather, traffic, strikes, natural disasters, government restrictions, or other circumstances beyond the control of Viaara Travels are not included in the package unless specifically stated.</p>
+    <p>Viaara Travels does not guarantee that every planned sightseeing location or activity will be accessible under all circumstances.</p>
+    <h3>3.7 Refund Conditions for Missed Activities</h3>
+    <p>No refund will be provided for individual services, activities, meals, or sightseeing missed due to personal reasons or late arrival.</p>
+    <h3>3.8 Contact for Cancellation &amp; Refund Enquiries</h3>
+    <p>For booking-related cancellation and refund enquiries, please contact:</p>
+    <p><strong>Viaara Travels</strong><br>Email: <a href="mailto:viaaratravels@gmail.com">viaaratravels@gmail.com</a><br>Phone: +91 8920943378 / +91 8800624119</p>
+    <p>Please mention your booking details and selected trip when contacting the team.</p>
+  </section>
+
+  <section class="contact">
+    <h2>Contact Information</h2>
+    <p><strong>Viaara Travels</strong><br>Email: <a href="mailto:viaaratravels@gmail.com">viaaratravels@gmail.com</a><br>Phone: +91 8920943378 / +91 8800624119</p>
+    <p>For trip-specific inclusions, exclusions, payment conditions, and other booking information, please refer to the respective trip itinerary.</p>
+    <p>Thank you for choosing Viaara Travels.</p>
+    <p><em>You go, we plan.</em></p>
+  </section>
+</main>
+<footer class="page-footer"><a href="#top">Back to top &uarr;</a></footer>
+<script>
+  const policySelector = document.getElementById('policy-selector');
+  policySelector.addEventListener('change', () => {
+    if (policySelector.value) window.location.hash = policySelector.value;
+    policySelector.value = '';
+  });
+</script>
+</body>
+</html>

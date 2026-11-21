@@ -4,20 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upcoming Trips · Viaara</title>
+  <script src="/trip-ui.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700;9..40,800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
     :root{
-      --bg:#f8f7f4;--bg2:#ffffff;--bg3:#f0efe9;
-      --green:#1f7a4a;--green-l:#29a84e;
-      --text:#1a1a1a;--text-m:#666666;
-      --border:rgba(0,0,0,0.1);
-      color-scheme:dark;
+      --bg:#faf9f6;--bg2:#ffffff;--bg3:#f1efea;
+      --green:#1f7a4a;--green-l:#29a84e;--green-d:#155433;--green-tint:#eef7f2;
+      --text:#0f1311;--text-m:#5b625e;--text-s:#878d89;
+      --border:rgba(15,19,17,0.10);--border-s:rgba(15,19,17,0.17);
+      --border-light:rgba(255,255,255,0.16);
+      --r-xs:0px;--r-sm:0px;--r-md:0px;--r-lg:0px;
+      --sh-1:0 1px 2px rgba(15,19,17,0.05);
+      --sh-2:0 1px 2px rgba(15,19,17,0.05),0 10px 28px -12px rgba(15,19,17,0.22);
+      --sh-pop:0 1px 3px rgba(15,19,17,0.08),0 24px 56px -20px rgba(15,19,17,0.35);
+      --ease:cubic-bezier(0.22,1,0.36,1);
+      --font-display:"Fraunces",Georgia,"Times New Roman",serif;
+      --font-ui:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+      color-scheme:light;
     }
     html{scroll-behavior:smooth;}
-    body{background:var(--bg);color:var(--text);font-family:"DM Sans",sans-serif;font-weight:400;line-height:1.6;overflow-x:hidden;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font-ui);font-weight:400;line-height:1.6;overflow-x:hidden;}
     h1,h2{color:var(--green);} h3{color:var(--text);}
 
     /* NAV — always white on this page */
@@ -34,58 +43,89 @@
     .nav-link{color:#1a1a1a;text-decoration:none;font-size:0.875rem;font-weight:400;letter-spacing:0.03em;transition:color 0.2s;}
     .nav-link:hover{color:#000;}
     .nav-dropdown{position:relative;}
-    .nav-dropdown-toggle{display:flex;align-items:center;gap:0.3rem;background:none;border:none;font-family:"DM Sans",sans-serif;font-size:0.875rem;font-weight:400;letter-spacing:0.03em;color:#1a1a1a;cursor:pointer;padding:0;transition:color 0.2s;}
+    .nav-dropdown-toggle{display:flex;align-items:center;gap:0.3rem;background:none;border:none;font-family:var(--font-ui);font-size:0.875rem;font-weight:400;letter-spacing:0.03em;color:#1a1a1a;cursor:pointer;padding:0;transition:color 0.2s;}
     .nav-dropdown-toggle:hover{color:#000;}
     .nav-dropdown-toggle svg{transition:transform 0.2s;}
     .nav-dropdown.open .nav-dropdown-toggle svg{transform:rotate(180deg);}
-    .nav-dropdown-menu{display:none;position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);background:#fff;border-radius:8px;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.15);overflow:hidden;z-index:300;}
+    .nav-dropdown-menu{display:none;position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);background:#fff;border-radius:0;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.15);overflow:hidden;z-index:300;}
     .nav-dropdown.open .nav-dropdown-menu{display:block;}
-    .nav-dropdown-menu a{display:block;padding:0.75rem 1.5rem;color:#1a1a1a;font-size:0.875rem;font-weight:400;letter-spacing:0.05em;text-decoration:none;transition:background 0.15s;}
+    .nav-dropdown-menu a,.nav-dropdown-menu .nav-unavailable{display:block;padding:0.75rem 1.5rem;color:#1a1a1a;font-size:0.875rem;font-weight:400;letter-spacing:0.05em;text-decoration:none;transition:background 0.15s;}
     .nav-dropdown-menu a:hover{background:#f4f4f4;}
-    .nav-cta{background:var(--green);color:#fff;padding:0.5rem 1.25rem;border-radius:100px;border:none;font-family:"DM Sans",sans-serif;font-size:0.875rem;font-weight:500;cursor:pointer;transition:background 0.2s;text-decoration:none;}
+    .nav-dropdown-menu .nav-unavailable{color:#888;cursor:not-allowed;}
+    .nav-dropdown-menu sup{margin-left:0.2rem;color:#28724d;font-size:0.625rem;font-weight:600;}
+    .nav-cta{background:var(--green);color:#fff;padding:0.5rem 1.25rem;border-radius:0;border:none;font-family:var(--font-ui);font-size:0.875rem;font-weight:500;cursor:pointer;transition:background 0.2s;text-decoration:none;}
     .nav-cta:hover{background:var(--green-l);}
     .nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
     .nav-hamburger span{display:block;width:22px;height:1.5px;background:#1a1a1a;}
 
     /* PAGE HEADER */
     .page-header{padding:4rem 2.5rem 2.5rem;}
-    .page-header h1{font-family:"DM Sans",sans-serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:800;color:var(--green);margin-bottom:0.5rem;}
+    .page-header h1{font-family:var(--font-display);font-size:clamp(2.25rem,4.2vw,3.5rem);font-weight:400;line-height:1.1;letter-spacing:-0.015em;color:var(--green);margin-bottom:0.5rem;}
     .page-header p{font-size:1rem;color:var(--text-m);}
 
+
+    /* PLACE FILTER - destination picker */
+    .place-filter{display:flex;gap:clamp(18px,2.4vw,34px);align-items:flex-start;overflow-x:auto;
+      padding:0 clamp(20px,4vw,64px) 0;margin-bottom:1.75rem;border-bottom:1px solid var(--border);
+      scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+      overflow-y:hidden;height:auto;position:static;background:none;box-shadow:none;}
+    .place-filter::-webkit-scrollbar{display:none;}
+    .place-item{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+      background:none;border:0;padding:0 0 0.875rem;cursor:pointer;font-family:var(--font-ui);
+      color:var(--text-s);border-bottom:2px solid transparent;transition:color 0.16s var(--ease),border-color 0.16s var(--ease);
+      scroll-snap-align:start;}
+    .place-item:hover{color:var(--text);}
+    .place-item.active{color:var(--text);border-bottom-color:var(--text);}
+    .place-item:focus-visible{outline:2px solid var(--green-l);outline-offset:3px;}
+    .place-ava{width:56px;height:56px;border-radius:50%;overflow:hidden;background:var(--bg3);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      border:1px solid var(--border);transition:border-color 0.16s var(--ease);}
+    .place-item.active .place-ava{border-color:var(--text);}
+    .place-ava img{width:100%;height:100%;object-fit:cover;display:block;}
+    /* Placeholder until real destination photos are supplied */
+    .place-ava-ph{font-size:1.125rem;font-weight:600;color:var(--green);letter-spacing:0.02em;}
+    .place-label{font-size:0.8125rem;font-weight:500;white-space:nowrap;letter-spacing:-0.005em;}
+    .place-item.active .place-label{font-weight:600;}
+    @media(max-width:640px){
+      .place-filter{gap:16px;padding-left:1.25rem;padding-right:1.25rem;margin-bottom:1.25rem;}
+      .place-ava{width:48px;height:48px;}
+      .place-label{font-size:0.75rem;}
+    }
 
     /* FILTER BAR */
     .filter-bar{padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;margin-bottom:2.5rem;flex-wrap:wrap;gap:1rem;}
     .filter-left{display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;}
-    .pill{background:#fff;border:1.5px solid rgba(0,0,0,0.15);color:#555;padding:0.4rem 1.1rem;border-radius:100px;font-family:"DM Sans",sans-serif;font-size:0.8125rem;font-weight:500;cursor:pointer;transition:all 0.2s;}
+    .pill{background:var(--bg2);border:1px solid var(--border-s);color:var(--text-m);padding:0.4rem 1rem;font-family:var(--font-ui);font-size:0.8125rem;font-weight:600;cursor:pointer;transition:background 0.15s var(--ease),border-color 0.15s var(--ease),color 0.15s var(--ease);}
     .pill.active,.pill:hover{background:var(--green);border-color:var(--green);color:#fff;}
-    .pill-month{display:flex;align-items:center;gap:0.3rem;}
+    .pill:disabled,.pill:disabled:hover{background:#eee;border-color:#ddd;color:#777;cursor:not-allowed;}
     .filter-right{display:flex;align-items:center;gap:0.75rem;}
-    .search-box{display:flex;align-items:center;gap:0.5rem;background:#fff;border:1px solid rgba(0,0,0,0.15);border-radius:100px;padding:0.4rem 1rem;}
-    .search-box input{background:none;border:none;outline:none;color:var(--text);font-family:"DM Sans",sans-serif;font-size:0.875rem;width:160px;}
+    .search-box{display:flex;align-items:center;gap:0.5rem;background:var(--bg2);border:1px solid var(--border-s);padding:0.45rem 0.875rem;transition:border-color 0.15s var(--ease),box-shadow 0.15s var(--ease);}
+    .search-box:focus-within{border-color:var(--green);box-shadow:0 0 0 3px rgba(31,122,74,0.12);}
+    .search-box input{background:none;border:none;outline:none;color:var(--text);font-family:var(--font-ui);font-size:0.875rem;width:160px;}
     .search-box input::placeholder{color:var(--text-m);}
     .search-box svg{flex-shrink:0;}
-    .filter-icon-btn{width:36px;height:36px;border-radius:8px;border:1px solid rgba(0,0,0,0.15);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s;}
+    .filter-icon-btn{width:36px;height:36px;border-radius:0;border:1px solid rgba(0,0,0,0.15);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.2s;}
     .filter-icon-btn:hover{border-color:var(--green);}
 
     /* TRIPS GRID */
     .trips-section{padding:0 2.5rem 5rem;}
     .trips-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;}
-    .trip-card{background:#fff;border-radius:14px;overflow:hidden;transition:transform 0.25s,box-shadow 0.25s;box-shadow:0 2px 12px rgba(0,0,0,0.07);}
+    .trip-card{background:var(--bg2);border:1px solid var(--border);overflow:hidden;box-shadow:var(--sh-1);transition:transform 0.2s var(--ease),box-shadow 0.2s var(--ease),border-color 0.2s var(--ease);}
     .trip-card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,0.12);}
     .trip-card-img{position:relative;overflow:hidden;}
     .trip-card-img img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;transition:transform 0.5s;}
     .trip-card:hover .trip-card-img img{transform:scale(1.04);}
-    .trip-badge-left{position:absolute;top:12px;left:12px;background:rgba(11,20,16,0.85);backdrop-filter:blur(6px);border-radius:8px;padding:0.375rem 0.625rem;display:flex;align-items:center;gap:0.4rem;}
+    .trip-badge-left{position:absolute;top:12px;left:12px;background:rgba(11,20,16,0.85);backdrop-filter:blur(6px);border-radius:0;padding:0.375rem 0.625rem;display:flex;align-items:center;gap:0.4rem;}
     .trip-badge-left .trophy{font-size:1rem;}
     .badge-text{display:flex;flex-direction:column;}
-    .badge-num{font-family:"DM Sans",sans-serif;font-size:1rem;font-weight:800;color:#fff;line-height:1;}
+    .badge-num{font-family:var(--font-ui);font-size:1rem;font-weight:800;color:#fff;line-height:1;}
     .badge-label{font-size:0.5625rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);line-height:1.2;}
-    .trip-badge-right{position:absolute;top:12px;right:12px;background:rgba(11,20,16,0.85);backdrop-filter:blur(6px);border-radius:100px;padding:0.3rem 0.875rem;font-size:0.75rem;font-weight:600;letter-spacing:0.04em;color:#fff;}
+    .trip-badge-right{position:absolute;top:12px;right:12px;background:rgba(11,20,16,0.85);backdrop-filter:blur(6px);border-radius:0;padding:0.3rem 0.875rem;font-size:0.75rem;font-weight:600;letter-spacing:0.04em;color:#fff;}
     .trip-name-overlay{position:absolute;bottom:0;left:0;right:0;padding:1.25rem 1.25rem 1rem;background:linear-gradient(to top,rgba(11,20,16,0.92) 0%,transparent 100%);}
-    .trip-name-overlay h3{font-family:"DM Sans",sans-serif;font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:0.2rem;}
+    .trip-name-overlay h3{font-family:var(--font-display);font-size:1.625rem;font-weight:400;letter-spacing:-0.015em;line-height:1.12;color:#fff;margin-bottom:0.3rem;}
     .sub-locs{font-size:0.6875rem;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,0.6);}
     .trip-card-body{padding:1.125rem 1.25rem 1.25rem;}
-    .trip-date-box{border:1px solid var(--border);border-radius:8px;padding:0.625rem 0.875rem;margin-bottom:0.875rem;}
+    .trip-date-box{border:1px solid var(--border);border-radius:0;padding:0.625rem 0.875rem;margin-bottom:0.875rem;}
     .d-label{font-size:0.6875rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-m);display:block;margin-bottom:0.2rem;}
     .d-value{font-size:0.9375rem;font-weight:600;color:var(--text);}
     .trip-desc{font-size:0.8125rem;color:var(--text-m);line-height:1.65;margin-bottom:1rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
@@ -93,12 +133,12 @@
     .trip-meta-item .m-label{font-size:0.6875rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-m);display:block;margin-bottom:0.2rem;}
     .trip-meta-item .m-value{font-size:0.9rem;font-weight:600;color:var(--text);}
     .intensity-bar{display:flex;align-items:center;gap:3px;}
-    .intensity-bar span{width:20px;height:3px;border-radius:2px;background:var(--border);}
+    .intensity-bar span{width:20px;height:3px;border-radius:0;background:var(--border);}
     .intensity-bar span.active{background:var(--green-l);}
     .trip-footer{display:flex;align-items:center;justify-content:space-between;}
     .starting-from .sf-label{font-size:0.6875rem;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-m);display:block;}
-    .starting-from .sf-price{font-family:"DM Sans",sans-serif;font-size:1.125rem;font-weight:700;color:var(--text);}
-    .btn-invite{background:var(--green);color:#fff;padding:0.6rem 1.25rem;border:none;border-radius:100px;font-family:"DM Sans",sans-serif;font-size:0.8125rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:background 0.2s;text-decoration:none;display:inline-block;}
+    .starting-from .sf-price{font-family:var(--font-ui);font-size:1.125rem;font-weight:700;color:var(--text);}
+    .btn-invite{background:var(--green);color:#fff;padding:0.6rem 1.25rem;border:none;border-radius:0;font-family:var(--font-ui);font-size:0.8125rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:background 0.2s;text-decoration:none;display:inline-block;}
     .btn-invite:hover{background:var(--green-l);}
 
     /* RESPONSIVE */
@@ -110,40 +150,58 @@
       .page-header{padding:2.5rem 1.25rem 1.5rem;}
       .filter-bar{padding:0 1.25rem;}
       .trips-section{padding:0 1.25rem 3rem;}
-      .trips-grid{grid-template-columns:1fr;}
+      .trips-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:0.75rem;}
+      .trips-grid .trip-card{min-width:0;}
+      .trips-grid .trip-card-img img{aspect-ratio:1 / 1;}
+      .trips-grid .trip-badge-left{top:6px;left:6px;padding:0.25rem 0.4rem;gap:0.25rem;}
+      .trips-grid .trip-badge-right{display:none;}
+      .trips-grid .trip-name-overlay{padding:1.5rem 0.625rem 0.625rem;}
+      .trips-grid .trip-name-overlay h3{font-size:clamp(1rem,3.5vw,1.25rem);line-height:1.2;overflow-wrap:anywhere;}
+      .trips-grid .trip-card-body{padding:0.75rem;}
+      .trips-grid .trip-date-box{padding:0.5rem;}
+      .trips-grid .d-value{font-size:0.8125rem;}
+      .trips-grid .trip-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.4rem;}
+      .trips-grid .trip-meta-item{min-width:0;}
+      .trips-grid .trip-meta-item .m-value{font-size:0.8125rem;overflow-wrap:anywhere;}
+      .trips-grid .trip-meta-item:last-child{grid-column:2;grid-row:1;}
+      .trips-grid .intensity-bar{grid-column:1 / -1;grid-row:2;}
+      .trips-grid .intensity-bar span{width:12px;}
+      .trips-grid .trip-footer{align-items:flex-start;flex-direction:column;gap:0.5rem;}
+      .trips-grid .sf-price{overflow-wrap:anywhere;}
+      .trips-grid .btn-invite{padding:0.5rem 0.75rem;font-size:0.75rem;}
     }
   
     /* ===== TRIP MODAL ===== */
     .modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.55);display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:1rem;}
     .modal-overlay.open{display:flex;}
-    .modal-panel{background:#fff;color:#1a1a1a;width:100%;max-width:960px;border-radius:16px;overflow:hidden;margin:auto;position:relative;}
+    .modal-panel{background:#fff;color:#1a1a1a;width:100%;max-width:960px;border-radius:0;overflow:hidden;margin:auto;position:relative;}
     /* sticky header */
     .modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:1.25rem 1.5rem 0;background:#fff;position:sticky;top:0;z-index:10;border-bottom:1px solid #f0f0f0;padding-bottom:1rem;}
     .modal-title-block{}
-    .modal-title{font-family:"DM Sans",sans-serif;font-size:1.25rem;font-weight:800;color:#1a1a1a;margin-bottom:0.25rem;line-height:1.3;}
+    .modal-title{font-family:var(--font-display);font-size:1.5rem;font-weight:400;letter-spacing:-0.015em;color:#0f1311;margin-bottom:0.25rem;line-height:1.2;}
     .modal-meta{font-size:0.8125rem;color:#888;}
     .modal-tags-row{display:flex;gap:0.5rem;margin-top:0.625rem;flex-wrap:wrap;}
-    .modal-tag-pill{display:flex;align-items:center;gap:0.3rem;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:100px;padding:0.3rem 0.75rem;font-size:0.75rem;font-weight:500;color:#555;}
+    .modal-tag-pill{display:flex;align-items:center;gap:0.3rem;background:#f5f5f5;border:1px solid #e8e8e8;border-radius:0;padding:0.3rem 0.75rem;font-size:0.75rem;font-weight:500;color:#555;}
     .modal-close{width:36px;height:36px;border-radius:50%;border:1px solid #e8e8e8;background:#f9f9f9;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem;color:#555;transition:background 0.15s;}
     .modal-close:hover{background:#eee;}
     /* body */
     .modal-body{padding:1.25rem 1.5rem;display:grid;grid-template-columns:1fr 340px;gap:1.5rem;align-items:start;}
     /* carousel */
-    .carousel{position:relative;border-radius:12px;overflow:hidden;background:#111;}
+    .carousel{position:relative;border-radius:0;overflow:hidden;background:#111;}
     .carousel-track{display:flex;transition:transform 0.4s ease;}
     .carousel-track img{width:100%;flex-shrink:0;object-fit:cover;aspect-ratio:4/3;display:block;}
     .carousel-btn{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.9);border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:1rem;color:#1a1a1a;}
     .carousel-btn.prev{left:10px;}
     .carousel-btn.next{right:10px;}
-    .carousel-counter{position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,0.55);color:#fff;font-size:0.75rem;border-radius:100px;padding:0.2rem 0.625rem;}
+    .carousel-counter{position:absolute;bottom:10px;right:12px;background:rgba(0,0,0,0.55);color:#fff;font-size:0.75rem;border-radius:0;padding:0.2rem 0.625rem;}
     .carousel-dots{display:flex;gap:4px;position:absolute;bottom:10px;left:50%;transform:translateX(-50%);}
     .carousel-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);}
     .carousel-dots span.active{background:#fff;}
     /* price card */
-    .price-card{border:1px solid #ececec;border-radius:12px;overflow:hidden;}
+    .price-card{border:1px solid #ececec;border-radius:0;overflow:hidden;}
     .price-card-top{padding:1.25rem;background:#fdf6f6;}
     .price-label{font-size:0.6875rem;letter-spacing:0.08em;text-transform:uppercase;color:#888;margin-bottom:0.3rem;}
-    .price-amount{font-family:"DM Sans",sans-serif;font-size:2rem;font-weight:800;color:#1a1a1a;}
+    .price-amount{font-family:var(--font-ui);font-size:2rem;font-weight:700;letter-spacing:-0.035em;font-variant-numeric:tabular-nums;color:#0f1311;}
     .price-amount span{font-size:0.875rem;font-weight:400;color:#888;}
     .price-meta-row{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;padding:1rem 1.25rem;border-top:1px solid #ececec;}
     .price-meta-item{display:flex;align-items:center;gap:0.5rem;}
@@ -151,18 +209,20 @@
     .price-meta-item .pm-label{font-size:0.6875rem;letter-spacing:0.05em;text-transform:uppercase;color:#aaa;display:block;margin-bottom:0.1rem;}
     .price-meta-item .pm-val{font-size:0.875rem;font-weight:600;color:#1a1a1a;}
     /* inquiry */
-    .inquiry-card{border:1px solid #ececec;border-radius:12px;padding:1.25rem;margin-top:1rem;}
+    .inquiry-card{border:1px solid #ececec;border-radius:0;padding:1.25rem;margin-top:1rem;}
     .inquiry-heading{display:flex;align-items:center;gap:0.5rem;font-size:1rem;font-weight:700;color:#1a1a1a;margin-bottom:0.25rem;}
     .inquiry-sub{font-size:0.8125rem;color:#888;margin-bottom:1rem;}
-    .inquiry-field{display:flex;align-items:center;gap:0.625rem;border:1.5px solid #e8e8e8;border-radius:10px;padding:0.625rem 0.875rem;margin-bottom:0.75rem;}
-    .inquiry-field input{border:none;outline:none;font-family:"DM Sans",sans-serif;font-size:0.9375rem;color:#1a1a1a;width:100%;background:transparent;}
+    .inquiry-field{display:flex;align-items:center;gap:0.625rem;border:1px solid #e8e8e8;border-radius:0;padding:0.625rem 0.875rem;margin-bottom:0.75rem;}
+    .inquiry-field input{border:none;outline:none;font-family:var(--font-ui);font-size:0.9375rem;color:#1a1a1a;width:100%;background:transparent;}
     .inquiry-field input::placeholder{color:#bbb;}
-    .btn-request{width:100%;background:#c0675a;color:#fff;border:none;border-radius:10px;padding:0.875rem;font-family:"DM Sans",sans-serif;font-size:0.9375rem;font-weight:600;cursor:pointer;transition:background 0.2s;}
+    .btn-request{width:100%;background:#c0675a;color:#fff;border:none;border-radius:0;padding:0.875rem;font-family:var(--font-ui);font-size:0.9375rem;font-weight:600;cursor:pointer;transition:background 0.2s;}
     .btn-request:hover{background:#b05a4e;}
+    .inquiry-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.5rem;}
+    .inquiry-actions .btn-request,.inquiry-actions .btn-book-now{min-width:0;width:100%;padding:0.875rem 0.5rem;border-radius:0;font-size:0.875rem;white-space:nowrap;}
     /* sections */
     .modal-section{padding:1.25rem 1.5rem;border-top:1px solid #f0f0f0;}
     .modal-section-title{display:flex;align-items:center;gap:0.625rem;font-size:1rem;font-weight:700;color:#1a1a1a;margin-bottom:1rem;padding-bottom:0.625rem;border-left:3px solid #c0675a;padding-left:0.75rem;}
-    .modal-section-title .badge{background:#f0f0f0;color:#666;font-size:0.75rem;border-radius:100px;padding:0.125rem 0.5rem;}
+    .modal-section-title .badge{background:#f0f0f0;color:#666;font-size:0.75rem;border-radius:0;padding:0.125rem 0.5rem;}
     /* itinerary */
     .itinerary-list{position:relative;padding-left:2.5rem;}
     .itinerary-list::before{content:"";position:absolute;left:17px;top:0;bottom:0;width:2px;background:#f0f0f0;}
@@ -174,26 +234,26 @@
     .itin-activity::before{content:"•";color:#c0675a;flex-shrink:0;}
     /* what's included */
     .included-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.625rem;}
-    .included-item{display:flex;align-items:center;gap:0.5rem;background:#f6fdf8;border:1px solid #ddf0e3;border-radius:8px;padding:0.625rem 0.75rem;font-size:0.8125rem;color:#1a1a1a;}
+    .included-item{display:flex;align-items:center;gap:0.5rem;background:#f6fdf8;border:1px solid #ddf0e3;border-radius:0;padding:0.625rem 0.75rem;font-size:0.8125rem;color:#1a1a1a;}
     .included-item svg{flex-shrink:0;}
     /* trip tags */
     .trip-tags-row{display:flex;flex-wrap:wrap;gap:0.5rem;}
-    .trip-tag{display:flex;align-items:center;gap:0.35rem;background:#f7f7f7;border-radius:100px;padding:0.35rem 0.875rem;font-size:0.8125rem;color:#555;}
+    .trip-tag{display:flex;align-items:center;gap:0.35rem;background:#f7f7f7;border-radius:0;padding:0.35rem 0.875rem;font-size:0.8125rem;color:#555;}
     /* upcoming dates */
     .dates-row{display:flex;gap:0.5rem;flex-wrap:wrap;}
-    .date-chip{display:flex;align-items:center;gap:0.4rem;background:#fff;border:1.5px solid #e8e8e8;border-radius:100px;padding:0.4rem 0.875rem;font-size:0.8125rem;color:#444;font-weight:500;}
+    .date-chip{display:flex;align-items:center;gap:0.4rem;background:#fff;border:1px solid #e8e8e8;border-radius:0;padding:0.4rem 0.875rem;font-size:0.8125rem;color:#444;font-weight:500;}
     .date-chip.first{border-color:#c0675a;color:#c0675a;font-weight:600;}
     /* sticky bottom */
     .modal-footer{position:sticky;bottom:0;background:#fff;border-top:1px solid #ececec;padding:0.875rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;}
     .footer-left{font-size:0.8125rem;color:#888;}
     .footer-left strong{display:block;color:#1a1a1a;font-weight:600;font-size:0.9375rem;}
     .footer-btns{display:flex;align-items:center;gap:0.625rem;}
-    .btn-chat{width:40px;height:40px;border:1.5px solid #e8e8e8;border-radius:50%;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-    .btn-book-now{background:#c0675a;color:#fff;border:none;border-radius:100px;padding:0.625rem 1.5rem;font-family:"DM Sans",sans-serif;font-size:0.9375rem;font-weight:600;cursor:pointer;transition:background 0.2s;}
+    .btn-chat{width:40px;height:40px;border:none;border-radius:0;background:#25D366;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .btn-book-now{background:var(--green);color:#fff;border:1px solid var(--green);padding:0.625rem 1.5rem;font-family:var(--font-ui);font-size:0.9375rem;font-weight:600;cursor:pointer;transition:background 0.16s var(--ease);}
     .btn-book-now:hover{background:#b05a4e;}
     @media(max-width:700px){
       .modal-body{grid-template-columns:1fr;}
-      .modal-panel{border-radius:12px 12px 0 0;margin:auto 0 0;}
+      .modal-panel{border-radius:0;margin:auto 0 0;}
       .included-grid{grid-template-columns:1fr 1fr;}
     }
 
@@ -214,14 +274,12 @@
         <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
       <div class="nav-dropdown-menu">
-        <a href="upcoming-trips.html">All</a>
-        <a href="upcoming-trips.html?scope=global">Global</a>
-        <a href="upcoming-trips.html?scope=local">Local</a>
+        <a href="upcoming-trips.html?scope=local">India</a>
+        <span class="nav-unavailable" role="link" aria-disabled="true">Global <sup>upcoming</sup></span>
       </div>
     </li>
     <li><a href="index.html#why" class="nav-link">Inside Viaara</a></li>
     <li><a href="index.html#contact" class="nav-cta">Get in Touch</a></li>
-    <li><a href="admin.html" style="font-size:0.75rem;color:rgba(100,100,100,0.5);text-decoration:none;letter-spacing:0.04em;padding:0.35rem 0.6rem;border:1px solid rgba(0,0,0,0.1);border-radius:6px;transition:all 0.2s;" onmouseover="this.style.color='#555';this.style.borderColor='rgba(0,0,0,0.25)'" onmouseout="this.style.color='rgba(100,100,100,0.5)';this.style.borderColor='rgba(0,0,0,0.1)'">Admin</a></li>
   </ul>
   <div class="nav-hamburger"><span></span><span></span><span></span></div>
 </nav>
@@ -233,29 +291,32 @@
 </div>
 
 
+<!-- PLACE FILTER -->
+<div class="place-filter" id="placeFilter" role="group" aria-label="Filter trips by destination"></div>
+
 <!-- FILTER BAR -->
 <div class="filter-bar">
   <div class="filter-left">
     <button class="pill active" onclick="filterTrips(this,'all')">All</button>
-    <button class="pill" onclick="filterTrips(this,'global')">Global</button>
+    <button class="pill" onclick="filterTrips(this,'global')" disabled aria-label="Global, upcoming" title="Global trips are upcoming">Global</button>
     <button class="pill" onclick="filterTrips(this,'local')">Local</button>
-    <button class="pill pill-month" onclick="">Month <svg width="10" height="7" viewBox="0 0 10 7" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
   </div>
   <div class="filter-right">
     <div class="search-box">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/><path d="M10 10l2.5 2.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       <input type="text" placeholder="Search trips" oninput="searchTrips(this.value)">
     </div>
-    <button class="filter-icon-btn">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M4 8h8M6 12h4" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round"/></svg>
-    </button>
   </div>
 </div>
 
 <!-- TRIPS GRID -->
 <div class="trips-section">
+  <p id="globalScopeNotice" role="status" hidden>Global trips are upcoming. Showing all available trips.</p>
   <div class="trips-grid" id="tripsGrid">
   </div>
+  <p id="tripsEmpty" hidden style="text-align:center;padding:3rem 1rem;color:var(--text-m);">
+    No trips match these filters. Try another destination or clear the search.
+  </p>
 </div>
 
 <script>
@@ -267,26 +328,102 @@
     if(d && !d.contains(e.target)) d.classList.remove('open');
   });
 
+  /* Scope, destination and search used to each set display on their own,
+     so whichever ran last won. They now feed one pipeline and combine. */
+  const tripFilters = { scope:'all', place:'all', query:'' };
+
+  function applyTripFilters(){
+    let shown = 0;
+    document.querySelectorAll('.trip-card').forEach(card => {
+      const okScope = tripFilters.scope === 'all' || card.dataset.type === tripFilters.scope;
+      const okPlace = tripFilters.place === 'all' || card.dataset.place === tripFilters.place;
+      const okQuery = !tripFilters.query || (card.dataset.name || '').includes(tripFilters.query);
+      const show = okScope && okPlace && okQuery;
+      card.style.display = show ? '' : 'none';
+      if(show) shown++;
+    });
+    const empty = document.getElementById('tripsEmpty');
+    if(empty) empty.hidden = shown > 0 || !document.querySelectorAll('.trip-card').length;
+  }
+
   function filterTrips(btn, type) {
+    document.getElementById('globalScopeNotice').hidden = true;
     document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    document.querySelectorAll('.trip-card').forEach(card => {
-      card.style.display = (type === 'all' || card.dataset.type === type) ? '' : 'none';
-    });
+    tripFilters.scope = type;
+    applyTripFilters();
   }
 
   function searchTrips(val) {
-    const q = val.toLowerCase();
-    document.querySelectorAll('.trip-card').forEach(card => {
-      card.style.display = card.dataset.name.includes(q) ? '' : 'none';
+    tripFilters.query = String(val || '').trim().toLowerCase();
+    applyTripFilters();
+  }
+
+  /* Destination row. Built from the trips themselves, so it stays in step
+     with whatever is published. Avatars are placeholders for now: drop a
+     filename into PLACE_IMAGES to swap one in, no other change needed. */
+  const PLACE_IMAGES = {
+    // 'Manali': '/media/places/manali.jpg',
+  };
+
+  function selectPlace(place, el){
+    tripFilters.place = place;
+    document.querySelectorAll('.place-item').forEach(b => {
+      b.classList.toggle('active', b === el);
+      b.setAttribute('aria-pressed', b === el ? 'true' : 'false');
     });
+    applyTripFilters();
+  }
+
+  function renderPlaceFilter(){
+    const bar = document.getElementById('placeFilter');
+    if(!bar) return;
+    const trips = (typeof _tripsArray !== 'undefined' && _tripsArray) ? _tripsArray : [];
+    const counts = new Map();
+    trips.forEach(t => {
+      const name = String(t.location || '').trim();
+      if(!name) return;
+      counts.set(name, (counts.get(name) || 0) + 1);
+    });
+    bar.innerHTML = '';
+    if(!counts.size){ bar.hidden = true; return; }
+    bar.hidden = false;
+
+    const make = (key, label, count, avatarHTML, isActive) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'place-item' + (isActive ? ' active' : '');
+      b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      b.innerHTML = '<span class="place-ava">' + avatarHTML + '</span>' +
+        '<span class="place-label">' + escapeTripText(label) + '</span>' +
+        '';
+      b.onclick = () => selectPlace(key, b);
+      bar.appendChild(b);
+    };
+
+    const pin = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" stroke="currentColor" stroke-width="1.6"/>' +
+      '<circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.6"/></svg>';
+    make('all', 'All trips', trips.length, '<span class="place-ava-ph">' + pin + '</span>', true);
+
+    [...counts.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .forEach(([name, n]) => {
+        const img = PLACE_IMAGES[name];
+        const avatar = img
+          ? '<img src="' + escapeTripText(img) + '" alt="" loading="lazy">'
+          : '<span class="place-ava-ph">' + escapeTripText(name.trim().charAt(0).toUpperCase()) + '</span>';
+        make(name, name, n, avatar, false);
+      });
   }
 
   // Auto-filter from URL param
   const scope = new URLSearchParams(location.search).get('scope');
-  if(scope) {
+  if(scope === 'global') {
+    document.getElementById('globalScopeNotice').hidden = false;
+  } else if(scope) {
     const btn = document.querySelector(`.pill[onclick*="${scope}"]`);
-    if(btn) filterTrips(btn, scope);
+    if(btn && !btn.disabled) filterTrips(btn, scope);
   }
 </script>
 
@@ -297,10 +434,6 @@
       <div class="modal-title-block">
         <div class="modal-title" id="mTitle">Trip Title</div>
         <div class="modal-meta" id="mMeta">Location · 6D · Next: 28 Oct</div>
-        <div class="modal-tags-row">
-          <span class="modal-tag-pill">🗓️ <span id="mDur">6D / 5N</span></span>
-          <span class="modal-tag-pill">📅 <span id="mNext">28 Oct</span></span>
-        </div>
       </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
@@ -328,10 +461,6 @@
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke="#c0675a" stroke-width="1.5"/><path d="M8 5v3.5l2 1.5" stroke="#c0675a" stroke-width="1.5" stroke-linecap="round"/></svg>
               <div><span class="pm-label">Response</span><span class="pm-val">~15 min</span></div>
             </div>
-            <div class="price-meta-item">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5l3.5-.5z" stroke="#c0675a" stroke-width="1.3" fill="none"/></svg>
-              <div><span class="pm-label">Verified</span><span class="pm-val">Operator</span></div>
-            </div>
           </div>
         </div>
         <div class="inquiry-card">
@@ -348,8 +477,11 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="2" stroke="#bbb" stroke-width="1.5"/><path d="M6 12h4" stroke="#bbb" stroke-width="1.5" stroke-linecap="round"/></svg>
             <input type="tel" id="inqPhone" placeholder="Phone number">
           </div>
-          <div id="inqMsg" style="display:none;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;"></div>
-          <button class="btn-request" id="inqBtn" onclick="submitInquiry()">Request quote</button>
+          <div id="inqMsg" style="display:none;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:0;margin-bottom:0.5rem;"></div>
+          <div class="inquiry-actions">
+            <button class="btn-request" id="inqBtn" onclick="submitInquiry()">Request quote</button>
+            <button class="btn-book-now" onclick="bookCurrentTrip()">Book now</button>
+          </div>
         </div>
       </div>
     </div>
@@ -384,16 +516,32 @@
         <strong>Book now or message us</strong>
       </div>
       <div class="footer-btns">
-        <button class="btn-chat">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M16 11.5a2.5 2.5 0 01-2.5 2.5H5l-3 2V4.5A2.5 2.5 0 014.5 2h9A2.5 2.5 0 0116 4.5v7z" stroke="#555" stroke-width="1.4" fill="none"/></svg>
+        <button class="btn-chat" onclick="openTripWhatsApp()" title="Message us on WhatsApp" aria-label="Message us on WhatsApp">
+          <svg width="20" height="20" viewBox="0 0 48 48" fill="#fff" aria-hidden="true"><path d="M24 4C13 4 4 13 4 24c0 3.6 1 7 2.7 10L4 44l10.3-2.7C17 43 20.4 44 24 44c11 0 20-9 20-20S35 4 24 4zm0 36c-3.1 0-6.1-.8-8.7-2.4l-.6-.4-6.1 1.6 1.6-5.9-.4-.6C8.8 30.1 8 27.1 8 24 8 15.2 15.2 8 24 8s16 7.2 16 16-7.2 16-16 16zm8.7-11.8c-.5-.2-2.8-1.4-3.2-1.5-.4-.2-.7-.2-1 .2-.3.5-1.2 1.5-1.4 1.8-.3.3-.5.3-1 .1-.5-.2-2-.7-3.8-2.3-1.4-1.2-2.3-2.8-2.6-3.2-.3-.5 0-.7.2-1l.7-.8c.2-.3.3-.5.5-.8.2-.3.1-.6 0-.8-.1-.2-1-2.5-1.4-3.4-.4-.9-.8-.8-1-.8h-.9c-.3 0-.8.1-1.2.6-.4.5-1.6 1.6-1.6 3.8s1.7 4.4 1.9 4.7c.2.3 3.3 5 8 7 1.1.5 2 .8 2.7 1 1.1.3 2.1.3 2.9.2.9-.1 2.8-1.1 3.2-2.2.4-1.1.4-2 .3-2.2-.2-.2-.5-.3-1-.5z"/></svg>
         </button>
-        <button class="btn-book-now" onclick="trackAnalytics(currentModalTripId,'click')">Book now</button>
+        <button class="btn-book-now" onclick="bookCurrentTrip()">Book now</button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
+function bookCurrentTrip(){
+  if(!currentModalTripId)return;
+  trackAnalytics(currentModalTripId,'click');
+  const query=new URLSearchParams({trip:String(currentModalTripId),book:'1'});
+  window.location.href='/index.html?'+query.toString();
+}
+function openTripWhatsApp(){
+  const trip=TRIPS[currentModalTripId];
+  if(!trip)return;
+  let message=`Hi Viaara! 👋 I’m interested in the *${trip.title}* trip`;
+  if(trip.location)message+=` to *${trip.location}*`;
+  if(trip.dates&&trip.dates[0])message+=` departing on *${trip.dates[0]}*`;
+  if(trip.price)message+=`. Starting from *${formatTripPrice(trip.price)}*`;
+  message+=`.\n\nCould you share the itinerary and payment details? Thanks!`;
+  window.open('https://wa.me/918595919242?text='+encodeURIComponent(message),'_blank','noopener');
+}
 
 // ===== TRIP DATA =====
 
@@ -571,10 +719,10 @@ function openTripModal(id) {
   carouselImages = t.images;
 
   document.getElementById('mTitle').textContent = t.title;
-  document.getElementById('mMeta').textContent = t.location + ' · ' + t.duration + ' · Next: ' + t.nextDate;
-  document.getElementById('mDur').textContent = t.duration;
-  document.getElementById('mNext').textContent = t.nextDate;
-  document.getElementById('mPrice').innerHTML = t.price + ' <span>/person</span>';
+  document.getElementById('mMeta').textContent = tripMeta(t);
+  const priceEl=document.getElementById('mPrice');
+  priceEl.textContent=formatTripPrice(t.price)||'TBD';
+  priceEl.insertAdjacentHTML('beforeend',' <span>/person</span>');
 
   // carousel
   const track = document.getElementById('carouselTrack');
@@ -620,7 +768,7 @@ function submitInquiry(){
   const msgEl=document.getElementById('inqMsg');
   const btn=document.getElementById('inqBtn');
   if(!name||!phone){
-    msgEl.style.cssText='display:block;background:#fff3f3;color:#c0675a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;';
+    msgEl.style.cssText='display:block;background:#fff3f3;color:#c0675a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:0;margin-bottom:0.5rem;';
     msgEl.textContent='Please enter your name and phone number.';
     return;
   }
@@ -640,7 +788,7 @@ function submitInquiry(){
   btn.textContent='✓ Sent!';
   btn.style.background='#1f7a4a';
   btn.disabled=true;
-  msgEl.style.cssText='display:block;background:#f0fdf4;color:#1f7a4a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:8px;margin-bottom:0.5rem;';
+  msgEl.style.cssText='display:block;background:#f0fdf4;color:#1f7a4a;font-size:0.85rem;text-align:center;padding:0.5rem;border-radius:0;margin-bottom:0.5rem;';
   msgEl.textContent='We\'ll reach out to you shortly!';
   document.getElementById('inqName').value='';
   document.getElementById('inqPhone').value='';
@@ -684,15 +832,16 @@ function renderAdminTrips(){
   const intensityDots = {'Relaxed':1,'Balanced':2,'Active':3,'Breathtaking':3};
   const intensityMax = 3;
 
+  setTimeout(renderPlaceFilter, 0);
   grid.innerHTML = activeTrips.map(t => {
     const img = t.images && t.images[0] ? t.images[0] : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&w=700&q=75';
     const dots = intensityDots[t.intensity] || 1;
     const dotsHtml = Array.from({length:intensityMax},(_,i)=>`<span class="${i<dots?'active':''}"></span>`).join('');
     const nextDate = t.dates && t.dates[0] ? t.dates[0] : '—';
-    return `<div class="trip-card" data-type="${t.scope}" data-name="${t.id}" onclick="openTripModal('${t.id}')" style="cursor:pointer">
+    return `<div class="trip-card" data-type="${t.scope}" data-place="${escapeTripText(t.location||'')}" data-name="${escapeTripText(String(t.title||'').toLowerCase())}" onclick="openTripModal('${t.id}')" style="cursor:pointer">
       <div class="trip-card-img">
         <img src="${img}" alt="${t.title}">
-        <div class="trip-badge-left"><span class="trophy">🏆</span><div class="badge-text"><span class="badge-num">${t.completed||0}</span><span class="badge-label">Trips<br>Completed</span></div></div>
+        ${t.completed?`<div class="trip-badge-left"><span class="trophy">🏆</span><div class="badge-text"><span class="badge-num">${t.completed}</span><span class="badge-label">Trips<br>Completed</span></div></div>`:''}
         <div class="trip-badge-right">${t.intensity||'Relaxed'}</div>
         <div class="trip-name-overlay"><h3>${t.location}</h3><p class="sub-locs">${t.subLocation||t.location}</p></div>
       </div>
@@ -705,7 +854,7 @@ function renderAdminTrips(){
           <div class="trip-meta-item" style="text-align:right"><span class="m-label">Intensity</span><span class="m-value">${t.intensity||'Relaxed'}</span></div>
         </div>
         <div class="trip-footer">
-          <div class="starting-from"><span class="sf-label">Starting From</span><span class="sf-price">${t.price}</span></div>
+          <div class="starting-from"><span class="sf-label">Starting From</span><span class="sf-price">${escapeTripText(formatTripPrice(t.price))}</span></div>
           <a href="#" class="btn-invite">Enquire Now</a>
         </div>
       </div>
@@ -718,14 +867,15 @@ document.addEventListener('DOMContentLoaded', loadPublicTrips);
 
 <!-- ENQUIRE NOW FLOATING BUTTON + MODAL -->
 <style>
-.enq-fab{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:9002;background:var(--green);color:#fff;writing-mode:vertical-rl;text-orientation:mixed;padding:1.25rem 0.75rem;font-family:"DM Sans",sans-serif;font-size:0.8125rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border:none;border-radius:10px 0 0 10px;box-shadow:-3px 0 16px rgba(0,0,0,0.15);transition:background 0.2s,padding 0.2s;}
-.enq-fab:hover{background:#174f30;padding-right:1rem;}
+.enq-fab{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:9002;background:var(--green);color:#fff;writing-mode:vertical-rl;text-orientation:mixed;padding:1.25rem 0.75rem;font-family:var(--font-ui);font-size:0.8125rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border:none;border-radius:0;box-shadow:-3px 0 16px rgba(0,0,0,0.15);transition:background 0.2s,padding 0.2s;}
+.enq-fab:hover{background:var(--green-d);padding-right:1rem;}
+@media(max-width:640px){.enq-fab{display:none;}}
 .enq-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9100;align-items:center;justify-content:center;}
 .enq-overlay.open{display:flex;}
-.enq-modal{background:#fff;border-radius:18px;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,0.18);overflow:hidden;animation:enq-pop 0.25s ease;}
+.enq-modal{background:#fff;border-radius:0;width:100%;max-width:480px;box-shadow:0 24px 64px rgba(0,0,0,0.18);overflow:hidden;animation:enq-pop 0.25s ease;}
 @keyframes enq-pop{from{transform:scale(0.93);opacity:0;}to{transform:scale(1);opacity:1;}}
 .enq-modal-head{background:var(--green);padding:1.5rem 1.75rem;display:flex;align-items:center;justify-content:space-between;}
-.enq-modal-head h3{font-family:"DM Sans",sans-serif;font-size:1.125rem;font-weight:700;color:#fff;margin:0;}
+.enq-modal-head h3{font-family:var(--font-ui);font-size:1.125rem;font-weight:700;color:#fff;margin:0;}
 .enq-modal-head p{font-size:0.8125rem;color:rgba(255,255,255,0.75);margin:0.25rem 0 0;}
 .enq-close{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;line-height:1;opacity:0.8;padding:0;}
 .enq-close:hover{opacity:1;}
@@ -733,14 +883,14 @@ document.addEventListener('DOMContentLoaded', loadPublicTrips);
 .enq-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
 .enq-field{margin-bottom:1.125rem;}
 .enq-field label{display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;}
-.enq-field input,.enq-field select,.enq-field textarea{width:100%;border:1.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:0.65rem 0.875rem;font-family:"DM Sans",sans-serif;font-size:0.9rem;color:#1a1a1a;background:#fafafa;outline:none;transition:border-color 0.2s;box-sizing:border-box;}
+.enq-field input,.enq-field select,.enq-field textarea{width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:0;padding:0.65rem 0.875rem;font-family:var(--font-ui);font-size:0.9rem;color:#1a1a1a;background:#fafafa;outline:none;transition:border-color 0.2s;box-sizing:border-box;}
 .enq-field input:focus,.enq-field select:focus,.enq-field textarea:focus{border-color:var(--green);background:#fff;}
 .enq-field textarea{resize:vertical;min-height:90px;}
-.enq-submit{width:100%;background:var(--green);color:#fff;border:none;border-radius:100px;padding:0.875rem;font-family:"DM Sans",sans-serif;font-size:0.9375rem;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:0.25rem;}
+.enq-submit{width:100%;background:var(--green);color:#fff;border:none;border-radius:0;padding:0.875rem;font-family:var(--font-ui);font-size:0.9375rem;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:0.25rem;}
 .enq-submit:hover{background:#174f30;}
 .enq-success{text-align:center;padding:2.5rem 1.75rem;}
 .enq-success-icon{font-size:2.5rem;margin-bottom:1rem;}
-.enq-success h3{font-family:"DM Sans",sans-serif;font-size:1.25rem;font-weight:700;color:var(--green);margin-bottom:0.5rem;}
+.enq-success h3{font-family:var(--font-ui);font-size:1.25rem;font-weight:700;color:var(--green);margin-bottom:0.5rem;}
 .enq-success p{font-size:0.9rem;color:#666;line-height:1.6;}
 </style>
 
@@ -825,22 +975,23 @@ function submitEnq(e){
 <style>
 .wa-fab{position:fixed;bottom:1.75rem;right:1.75rem;z-index:9500;background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(37,211,102,0.45);transition:transform 0.2s,box-shadow 0.2s;}
 .wa-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(37,211,102,0.6);}
-.wa-fab::before,.wa-fab::after{content:'';position:absolute;border-radius:50%;background:rgba(37,211,102,0.3);animation:wa-pulse 2s ease-out infinite;}
-.wa-fab::before{width:72px;height:72px;animation-delay:0s;}
-.wa-fab::after{width:88px;height:88px;animation-delay:0.6s;}
-@keyframes wa-pulse{0%{transform:scale(0.85);opacity:0.7;}100%{transform:scale(1.3);opacity:0;}}
+@media(prefers-reduced-motion:no-preference){
+  .wa-fab,.btn-chat{animation:wa-radiate 2s ease-out infinite;}
+  .wa-fab:hover,.wa-fab:focus-visible,.btn-chat:hover,.btn-chat:focus-visible{animation-play-state:paused;}
+  @keyframes wa-radiate{0%{box-shadow:0 0 0 0 rgba(37,211,102,0.5);}70%,100%{box-shadow:0 0 0 12px rgba(37,211,102,0);}}
+}
 </style>
 
 
 <!-- SUBMIT REVIEW FLOATING BUTTON + MODAL -->
 <style>
-.rv-fab{position:fixed;right:0;top:calc(50% + 60px);transform:translateY(-50%);z-index:9000;background:#f59e0b;color:#fff;writing-mode:vertical-rl;text-orientation:mixed;padding:1.25rem 0.75rem;font-family:"DM Sans",sans-serif;font-size:0.8125rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border:none;border-radius:10px 0 0 10px;box-shadow:-3px 0 16px rgba(0,0,0,0.12);transition:background 0.2s,padding 0.2s;}
+.rv-fab{position:fixed;right:0;top:calc(50% + 60px);transform:translateY(-50%);z-index:9000;background:#f59e0b;color:#fff;writing-mode:vertical-rl;text-orientation:mixed;padding:1.25rem 0.75rem;font-family:var(--font-ui);font-size:0.8125rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border:none;border-radius:0;box-shadow:-3px 0 16px rgba(0,0,0,0.12);transition:background 0.2s,padding 0.2s;}
 .rv-fab:hover{background:#d97706;padding-right:1rem;}
 .rv-pub-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9100;align-items:center;justify-content:center;}
 .rv-pub-overlay.open{display:flex;}
-.rv-pub-modal{background:#fff;border-radius:18px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.18);overflow:hidden;animation:enq-pop 0.25s ease;}
+.rv-pub-modal{background:#fff;border-radius:0;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.18);overflow:hidden;animation:enq-pop 0.25s ease;}
 .rv-pub-head{background:#f59e0b;padding:1.5rem 1.75rem;display:flex;align-items:center;justify-content:space-between;}
-.rv-pub-head h3{font-family:"DM Sans",sans-serif;font-size:1.125rem;font-weight:700;color:#fff;margin:0;}
+.rv-pub-head h3{font-family:var(--font-ui);font-size:1.125rem;font-weight:700;color:#fff;margin:0;}
 .rv-pub-head p{font-size:0.8125rem;color:rgba(255,255,255,0.8);margin:0.2rem 0 0;}
 .rv-pub-close{background:none;border:none;color:#fff;font-size:1.4rem;cursor:pointer;opacity:0.85;}
 .rv-pub-close:hover{opacity:1;}
@@ -848,7 +999,7 @@ function submitEnq(e){
 .rv-star-pick{display:flex;gap:0.4rem;margin-bottom:0.25rem;}
 .rv-star-pick span{font-size:1.5rem;cursor:pointer;color:#d1d5db;transition:color 0.15s;line-height:1;}
 .rv-star-pick span.active,.rv-star-pick span:hover{color:#f59e0b;}
-.rv-pub-submit{width:100%;background:#f59e0b;color:#fff;border:none;border-radius:100px;padding:0.875rem;font-family:"DM Sans",sans-serif;font-size:0.9375rem;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:0.5rem;}
+.rv-pub-submit{width:100%;background:#f59e0b;color:#fff;border:none;border-radius:0;padding:0.875rem;font-family:var(--font-ui);font-size:0.9375rem;font-weight:700;cursor:pointer;transition:background 0.2s;margin-top:0.5rem;}
 .rv-pub-submit:hover{background:#d97706;}
 </style>
 
@@ -862,14 +1013,14 @@ function submitEnq(e){
     <div class="rv-pub-body" id="rvPubWrap">
       <form onsubmit="submitPublicReview(event)" style="display:flex;flex-direction:column;gap:1rem;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.875rem;">
-          <div><label class="enq-field" style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;">Name</label><input class="enq-field input" type="text" id="pubRvName" placeholder="Your name" required style="width:100%;border:1.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:0.65rem 0.875rem;font-family:DM Sans,sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box;"></div>
-          <div><label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;">Email</label><input type="email" id="pubRvEmail" placeholder="you@email.com" style="width:100%;border:1.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:0.65rem 0.875rem;font-family:DM Sans,sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box;"></div>
+          <div><label class="enq-field" style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;">Name</label><input class="enq-field input" type="text" id="pubRvName" placeholder="Your name" required style="width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:0;padding:0.65rem 0.875rem;font-family:var(--font-ui);font-size:0.9rem;outline:none;box-sizing:border-box;"></div>
+          <div><label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;">Email</label><input type="email" id="pubRvEmail" placeholder="you@email.com" style="width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:0;padding:0.65rem 0.875rem;font-family:var(--font-ui);font-size:0.9rem;outline:none;box-sizing:border-box;"></div>
         </div>
         <div><label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;">Which trip?</label>
-          <input type="text" id="pubRvTrip" placeholder="e.g. Meghalaya, Goa..." style="width:100%;border:1.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:0.65rem 0.875rem;font-family:DM Sans,sans-serif;font-size:0.9rem;outline:none;box-sizing:border-box;">
+          <input type="text" id="pubRvTrip" placeholder="e.g. Meghalaya, Goa..." style="width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:0;padding:0.65rem 0.875rem;font-family:var(--font-ui);font-size:0.9rem;outline:none;box-sizing:border-box;">
         </div>
         <div><label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.4rem;">Your Review</label>
-          <textarea id="pubRvQuote" rows="3" placeholder="Tell others about your experience..." required style="width:100%;border:1.5px solid rgba(0,0,0,0.12);border-radius:8px;padding:0.65rem 0.875rem;font-family:DM Sans,sans-serif;font-size:0.9rem;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+          <textarea id="pubRvQuote" rows="3" placeholder="Tell others about your experience..." required style="width:100%;border:1px solid rgba(0,0,0,0.12);border-radius:0;padding:0.65rem 0.875rem;font-family:var(--font-ui);font-size:0.9rem;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
         </div>
         <div>
           <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#555;margin-bottom:0.5rem;">Rating</label>
@@ -922,7 +1073,7 @@ function submitPublicReview(e){
     list.push(review);
     localStorage.setItem('viaara_testimonials',JSON.stringify(list));
   }catch(err){}
-  document.getElementById('rvPubWrap').innerHTML='<div style="text-align:center;padding:2rem 1rem;"><div style="font-size:2.5rem;margin-bottom:1rem;">🙏</div><h3 style="font-family:DM Sans,sans-serif;font-size:1.25rem;font-weight:700;color:#1f7a4a;margin-bottom:0.5rem;">Thank you!</h3><p style="font-size:0.9rem;color:#666;line-height:1.6;">Your review has been submitted and will appear on our site once approved by the team.</p></div>';
+  document.getElementById('rvPubWrap').innerHTML='<div style="text-align:center;padding:2rem 1rem;"><div style="font-size:2.5rem;margin-bottom:1rem;">🙏</div><h3 style="font-family:var(--font-ui);font-size:1.25rem;font-weight:700;color:#1f7a4a;margin-bottom:0.5rem;">Thank you!</h3><p style="font-size:0.9rem;color:#666;line-height:1.6;">Your review has been submitted and will appear on our site once approved by the team.</p></div>';
   setTimeout(function(){closeRvPub();},3000);
 }
 </script>
