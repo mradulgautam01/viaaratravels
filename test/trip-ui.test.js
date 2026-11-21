@@ -41,3 +41,15 @@ test('upcoming trip actions route to booking and WhatsApp for the selected trip'
   assert.match(url.searchParams.get('text'), /Manali/);
   assert.match(url.searchParams.get('text'), /\u20b96499/);
 });
+
+test('destination separators are saved cleanly and old mojibake is normalized', () => {
+  const admin = fs.readFileSync(path.join(publicDir, 'admin.html'), 'utf8');
+  const index = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8');
+  const upcoming = fs.readFileSync(path.join(publicDir, 'upcoming-trips.html'), 'utf8');
+
+  assert.equal(admin.includes("destTags.join(' Â· ')"), false);
+  assert.equal((admin.match(/destTags\.join\(' · '\)/g) || []).length, 2);
+  for (const html of [index, upcoming]) {
+    assert.match(html, /destinations\.replace\(\/\\u00c2\\u00b7\/g, '·'\)/);
+  }
+});

@@ -4,46 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Policies &amp; Information · Viaara Travels</title>
+  <link rel="icon" type="image/jpeg" href="/media/viaara-logo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT,WONK@9..144,300..700,0..100,0..1&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *,*::before,*::after{box-sizing:border-box;}
     html{scroll-behavior:smooth;}
-    body{margin:0;background:#faf9f6;color:#0f1311;font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.75;-webkit-font-smoothing:antialiased;}
+    body{margin:0;background:#faf9f6;color:#0f1311;font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased;}
     a{color:#155433;}
     a:focus-visible,select:focus-visible{outline:2px solid #1f7a4a;outline-offset:3px;}
-    .page-header{background:#0f1913;color:#fff;padding:1.25rem clamp(20px,4vw,64px);}
+    .page-header{background:#0f1913;color:#fff;padding:0.75rem clamp(20px,4vw,64px);}
     .brand{display:flex;align-items:center;}
-    .brand img{display:block;width:48px;height:48px;border-radius:50%;object-fit:cover;}
+    .brand img{display:block;width:128px;height:54px;object-fit:cover;object-position:center 34%;}
     .header-inner,.layout,.section-nav-inner,.page-footer{width:min(1200px,100%);margin:auto;}
     .header-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem;}
     .home-link{color:rgba(255,255,255,0.85);font-size:0.875rem;text-decoration:none;}
     .home-link:hover{color:#fff;}
     .section-nav{position:sticky;top:0;z-index:10;background:rgba(250,249,246,0.97);border-bottom:1px solid rgba(15,19,17,0.12);backdrop-filter:blur(16px);}
     .section-nav-inner{padding:0 clamp(20px,4vw,64px);}
-    .section-links{display:flex;gap:clamp(20px,3vw,40px);flex-wrap:wrap;}
-    .section-links a{padding:1rem 0;color:#155433;font-size:0.875rem;font-weight:600;text-decoration:none;}
+    .section-links{display:flex;gap:clamp(16px,2.5vw,32px);flex-wrap:wrap;}
+    .section-links a{padding:0.7rem 0;color:#155433;font-size:0.875rem;font-weight:600;text-decoration:none;}
     .section-links a:hover{text-decoration:underline;}
     .mobile-selector{display:none;}
-    .layout{padding:clamp(48px,7vw,88px) clamp(20px,4vw,64px) 96px;}
+    .layout{padding:clamp(40px,5vw,64px) clamp(20px,4vw,64px) 56px;}
     .intro,.policy-section,.contact{max-width:760px;}
     .eyebrow{margin:0 0 0.75rem;color:#1f7a4a;font-size:0.75rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;}
     h1,h2{font-family:"Fraunces",Georgia,serif;font-weight:400;line-height:1.15;letter-spacing:-0.015em;color:#1f7a4a;}
-    h1{font-size:clamp(2.5rem,5vw,4rem);margin:0 0 1.5rem;}
-    h2{font-size:clamp(2rem,4vw,3rem);margin:0 0 0.75rem;}
-    h3{font-size:1.0625rem;line-height:1.4;margin:2rem 0 0.65rem;}
-    p{margin:0 0 1rem;}
-    ul{padding-left:1.4rem;margin:0 0 1rem;}
-    li{padding-left:0.2rem;margin-bottom:0.35rem;}
-    .notice{background:#eef7f2;border-left:3px solid #1f7a4a;padding:1rem 1.25rem;margin:1.5rem 0;}
+    h1{font-size:clamp(2.5rem,5vw,4rem);margin:0 0 1rem;}
+    h2{font-size:clamp(2rem,4vw,3rem);margin:0 0 0.5rem;}
+    h3{font-size:1.0625rem;line-height:1.4;margin:1.5rem 0 0.5rem;}
+    p{margin:0 0 0.75rem;}
+    ul{padding-left:1.4rem;margin:0 0 0.75rem;}
+    li{padding-left:0.2rem;margin-bottom:0.25rem;}
+    .notice{background:#eef7f2;border-left:3px solid #1f7a4a;padding:0.75rem 1rem;margin:1rem 0;}
     .notice p:last-child{margin-bottom:0;}
-    .policy-section,.contact{padding-top:3rem;margin-top:3rem;border-top:1px solid rgba(15,19,17,0.14);scroll-margin-top:6rem;}
-    .updated{font-size:0.875rem;color:#5b625e;margin-bottom:1.75rem;}
-    .page-footer{padding:2rem clamp(20px,4vw,64px);border-top:1px solid rgba(15,19,17,0.1);font-size:0.875rem;}
+    .policy-section,.contact{padding-top:2rem;margin-top:2rem;border-top:1px solid rgba(15,19,17,0.14);scroll-margin-top:5rem;}
+    .updated{font-size:0.875rem;color:#5b625e;margin-bottom:1rem;}
+    .page-footer{padding:1.25rem clamp(20px,4vw,64px);border-top:1px solid rgba(15,19,17,0.1);font-size:0.875rem;}
     @media(max-width:640px){
       .section-links{display:none;}
-      .mobile-selector{display:block;padding:0.75rem 0;}
+      .layout{padding:32px 20px 40px;}
+      .mobile-selector{display:block;padding:0.5rem 0;}
       .mobile-selector label{display:block;font-size:0.75rem;font-weight:600;margin-bottom:0.25rem;}
       .mobile-selector select{width:100%;padding:0.65rem;background:#fff;border:1px solid rgba(15,19,17,0.25);font:inherit;color:#0f1311;}
       .policy-section{scroll-margin-top:7rem;}
@@ -54,7 +56,7 @@
 <body id="top">
 <header class="page-header">
   <div class="header-inner">
-    <a class="brand" href="/"><img src="/media/viaara-logo.png" alt="Viaara"></a>
+    <a class="brand" href="/"><img src="/media/viaara-logo.jpg" alt="Viaara"></a>
     <a class="home-link" href="/">Back to homepage &rarr;</a>
   </div>
 </header>

@@ -6,7 +6,13 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../db/db');
 const { getPrefixForTrip, templateId } = require('../lib/tripId');
-const { syncDepartures, groupCode } = require('../lib/departures');
+const {
+  syncDepartures,
+  groupCode,
+  durationDays,
+  lockTrip,
+  lockDeparture
+} = require('../lib/departures');
 const { requireAdmin } = require('../lib/auth');
 
 const router = express.Router();
@@ -14,6 +20,126 @@ const router = express.Router();
 // ── Helpers ───────────────────────────────────────────────────
 const JSON_COLS = ['destinations','departureCities','itinerary','inclusions','exclusions','tags','images','dates'];
 const JSON_OBJ_COLS = ['dateSeats']; // object (not array) JSON cols
+
+const TRIP_FIELDS = new Set([
+  'title', 'summary', 'location', 'subLocation', 'price',
+  'duration', 'days', 'nights', 'scope', 'destinations',
+  'departureCities', 'itinerary', 'included', 'inclusions',
+  'exclusions', 'tags', 'images', 'dates', 'availType',
+  'seats', 'dateSeats', 'completed', 'intensity',
+  'special', 'status'
+]);
+
+const TRIP_STATUSES = new Set([
+  'draft', 'upcoming', 'active', 'archived', 'completed'
+]);
+
+const AVAIL_TYPES = new Set([
+  'fixed', 'weekly', 'everyday', 'request'
+]);
+
+const SCOPES = new Set(['local', 'global']);
+
+const INTENSITIES = new Set([
+  'Relaxed', 'Balanced', 'Active', 'Breathtaking'
+]);
+
+function validateTripBody(body, { isUpdate = false } = {}) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return 'Request body must be a JSON object';
+  }
+
+  for (const key of Object.keys(body)) {
+    if (key === 'id' || key === 'tripId' || key === 'prefix' ||
+        key === 'displayTripId' || key === 'created_at' ||
+        key === 'updated_at') {
+      continue;
+    }
+
+    if (!TRIP_FIELDS.has(key)) {
+      return `Unsupported trip field: ${key}`;
+    }
+  }
+
+  if (!isUpdate && (!body.title || typeof body.title !== 'string' || !body.title.trim())) {
+    return 'Trip title is required';
+  }
+
+  const stringLimits = {
+    title: 200,
+    summary: 5000,
+    location: 200,
+    subLocation: 500,
+    price: 100,
+    duration: 100,
+    days: 20,
+    nights: 20
+  };
+
+  for (const [field, max] of Object.entries(stringLimits)) {
+    if (body[field] !== undefined &&
+        (typeof body[field] !== 'string' || body[field].length > max)) {
+      return `${field} must be a string of at most ${max} characters`;
+    }
+  }
+
+  if (body.status !== undefined && !TRIP_STATUSES.has(body.status)) {
+    return 'Invalid trip status';
+  }
+
+  if (body.scope !== undefined && !SCOPES.has(body.scope)) {
+    return 'Invalid trip scope';
+  }
+
+  if (body.intensity !== undefined && !INTENSITIES.has(body.intensity)) {
+    return 'Invalid trip intensity';
+  }
+
+  if (body.availType !== undefined && !AVAIL_TYPES.has(body.availType)) {
+    return 'Invalid availability type';
+  }
+
+  for (const field of [
+    'destinations', 'departureCities', 'itinerary', 'included',
+    'inclusions', 'exclusions', 'tags', 'images', 'dates'
+  ]) {
+    if (body[field] !== undefined && !Array.isArray(body[field])) {
+      return `${field} must be an array`;
+    }
+  }
+
+  if (body.dateSeats !== undefined &&
+      (!body.dateSeats || typeof body.dateSeats !== 'object' ||
+       Array.isArray(body.dateSeats))) {
+    return 'dateSeats must be an object';
+  }
+
+  for (const field of ['seats', 'completed']) {
+    if (body[field] !== undefined && body[field] !== null) {
+      const value = body[field];
+
+      // Accept numbers and non-empty numeric strings, but reject empty strings.
+      if (
+        (typeof value !== 'number' && typeof value !== 'string') ||
+        (typeof value === 'string' && !value.trim()) ||
+        !Number.isInteger(Number(value)) ||
+        Number(value) < (field === 'seats' ? 1 : 0)
+      ) {
+        return `${field} must be a valid ${field === 'seats' ? 'positive' : 'non-negative'} integer`;
+      }
+    }
+  }
+
+  if (body.special !== undefined && typeof body.special !== 'boolean') {
+    return 'special must be a boolean';
+  }
+
+  if (body.status === 'completed' && !isUpdate) {
+    return 'A trip can be completed only after its full departure groups have finished';
+  }
+
+  return null;
+}
 
 function serialize(trip) {
   const t = { ...trip };
@@ -173,6 +299,11 @@ router.get('/:id', async (req, res) => {
 
 // ── POST /api/trips — create new trip ─────────────────────────
 router.post('/', requireAdmin, async (req, res) => {
+  const validationError = validateTripBody(req.body);
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
+  }
+
   try {
     const id = uuidv4();
     const prefix = getPrefixForTrip(req.body);
@@ -209,6 +340,11 @@ router.post('/', requireAdmin, async (req, res) => {
 
 // ── PUT /api/trips/:id — update trip ─────────────────────────
 router.put('/:id', requireAdmin, async (req, res) => {
+  const validationError = validateTripBody(req.body, { isUpdate: true });
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
+  }
+
   try {
     const existing = await db('trips').where({ id: req.params.id }).first();
     if (!existing) return res.status(404).json({ error: 'Trip not found' });
@@ -220,15 +356,86 @@ router.put('/:id', requireAdmin, async (req, res) => {
     delete body.tripId;
     delete body.displayTripId;
 
-    // Recompute the prefix only when destinations are present and actually changed.
     const update = { ...body, updated_at: db.fn.now() };
-    if (req.body.destinations !== undefined &&
-        !sameDestinations(req.body.destinations, existing.destinations)) {
-      update.prefix = getPrefixForTrip({ ...existing, ...req.body });
-    }
 
     await db.transaction(async trx => {
-      if (update.status === 'completed' && existing.status !== 'completed') {
+      // Lock and reread the latest trip before making lifecycle decisions.
+      const currentTrip = await lockTrip(trx, req.params.id);
+
+      if (!currentTrip) {
+        const err = new Error('Trip not found');
+        err.status = 404;
+        throw err;
+      }
+
+      // Recompute the prefix using the latest locked trip data.
+      if (
+        req.body.destinations !== undefined &&
+        !sameDestinations(req.body.destinations, currentTrip.destinations)
+      ) {
+        update.prefix = getPrefixForTrip({
+          ...currentTrip,
+          ...req.body
+        });
+      }
+
+      // Completed trips cannot be reopened or moved to another status.
+      if (
+        currentTrip.status === 'completed' &&
+        update.status !== undefined &&
+        update.status !== 'completed'
+      ) {
+        const err = new Error('Completed trips cannot be reopened');
+        err.status = 400;
+        throw err;
+      }
+
+      // Prevent changing trip duration after bookings or completed history exist.
+      const oldDurationDays = durationDays(currentTrip);
+      const newDurationDays = durationDays({ ...currentTrip, ...update });
+
+      if (oldDurationDays !== newDurationDays) {
+        const departureIds = await trx('departures')
+          .where({ tripId: req.params.id })
+          .pluck('id');
+
+        for (const departureId of departureIds.sort()) {
+          const lockedDeparture = await lockDeparture(trx, departureId);
+
+          if (!lockedDeparture) {
+            const err = new Error(
+              'Departure changed while updating trip duration; please retry'
+            );
+            err.status = 409;
+            throw err;
+          }
+        }
+
+        if (departureIds.length) {
+          const groups = await trx('departure_groups')
+            .whereIn('departureId', departureIds);
+
+          const groupIds = groups.map(group => group.id);
+
+          const hasBookings = groupIds.length
+            ? await trx('bookings').whereIn('groupId', groupIds).first('id')
+            : null;
+
+          const hasCompletedGroups = groups.some(
+            group => group.status === 'completed'
+          );
+
+          if (hasBookings || hasCompletedGroups) {
+            const err = new Error(
+              'Trip duration cannot be changed after bookings or completed departure history exist'
+            );
+            err.status = 400;
+            throw err;
+          }
+        }
+      }
+
+      if (update.status === 'completed' && currentTrip.status !== 'completed') {
         const departures = await trx('departures').where({ tripId: req.params.id }).pluck('id');
         const groups = departures.length ? await trx('departure_groups').whereIn('departureId', departures) : [];
         if (!groups.length || groups.some(group => group.status !== 'completed')) {
@@ -245,7 +452,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Trip not found' });
     res.json(serialize(updated));
   } catch (err) {
-    if (err.status === 400) return res.status(400).json({ error: err.message });
+    if ([400, 404, 409].includes(err.status)) {
+      return res.status(err.status).json({ error: err.message });
+    }
     sendServerError(res, 'update trip', err);
   }
 });
@@ -254,7 +463,41 @@ router.put('/:id', requireAdmin, async (req, res) => {
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     await db.transaction(async trx => {
-      const departures = await trx('departures').where({ tripId: req.params.id }).pluck('id');
+      // Lock the trip before checking or deleting its related records.
+      const trip = await lockTrip(trx, req.params.id);
+
+      if (!trip) {
+        const err = new Error('Trip not found');
+        err.status = 404;
+        throw err;
+      }
+
+      const archivedInstance = await trx('trip_instances')
+        .where({ tripId: req.params.id })
+        .first('id');
+
+      if (archivedInstance) {
+        const err = new Error('Trips with archived instances cannot be deleted; historical records must be preserved');
+        err.status = 400;
+        throw err;
+      }
+
+      const departureRows = await trx('departures')
+        .where({ tripId: req.params.id })
+        .orderBy('id');
+
+      const departures = departureRows.map(d => d.id);
+
+      for (const departureId of departures) {
+        const locked = await lockDeparture(trx, departureId);
+
+        if (!locked) {
+          const err = new Error('Departure changed while deleting trip; please retry');
+          err.status = 409;
+          throw err;
+        }
+      }
+
       if (departures.length) {
         const groups = await trx('departure_groups').whereIn('departureId', departures).pluck('id');
         if (groups.length && await trx('bookings').whereIn('groupId', groups).first('id')) {
@@ -269,7 +512,9 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     });
     res.json({ ok: true });
   } catch (err) {
-    if (err.status === 400) return res.status(400).json({ error: err.message });
+    if (err.status === 400 || err.status === 404 || err.status === 409) {
+      return res.status(err.status).json({ error: err.message });
+    }
     sendServerError(res, 'delete trip', err);
   }
 });

@@ -30,6 +30,19 @@ function resolveSeatLimit(trip, departure) {
   return Number.isInteger(fallback) && fallback > 0 ? fallback : null;
 }
 
+// Serialise every operation that can change a group's occupancy against the
+// departure row, so capacity is read and written under a single lock.
+//   Postgres: forUpdate() takes a row-level lock held until commit.
+//   SQLite:   forUpdate() is a no-op, so the write below takes the write
+//             lock instead. Both are needed; neither alone is portable.
+// The timestamp touch IS the lock on SQLite — do not remove it as redundant.
+async function lockDeparture(trx, departureId) {
+  const departure = await trx('departures').where({ id: departureId }).forUpdate().first();
+  if (!departure) return null;
+  await trx('departures').where({ id: departureId }).update({ updated_at: trx.fn.now() });
+  return departure;
+}
+
 // Travellers already holding seats in a group.
 async function seatsTaken(trx, groupId) {
   const row = await trx('bookings')
@@ -61,6 +74,20 @@ function serialize(row) {
   const result = { ...row };
   result.pax = row.pax ? JSON.parse(row.pax) : [];
   return result;
+}
+
+// Two requests carrying the same requestKey can both pass the "already seen?"
+// check and race to insert. One wins, the other hits the unique index. That is
+// a successful duplicate submission, not an error, so we recover the original
+// booking rather than weakening the index.
+function isRequestKeyConflict(err) {
+  if (err.constraint === 'bookings_request_key_unique') return true;
+
+  // SQLite names the failed column in the message; it sets no constraint field.
+  return (
+    ['SQLITE_CONSTRAINT_UNIQUE', 'SQLITE_CONSTRAINT'].includes(err.code) &&
+    /UNIQUE constraint failed:\s*bookings\.requestKey/i.test(err.message || '')
+  );
 }
 
 function error(res, action, err) {
@@ -148,10 +175,13 @@ router.post('/', publicWriteLimiter, async (req, res) => {
     const paymentStatus = isAdmin ? (body.paymentStatus || 'Unpaid') : 'Unpaid';
     if (!statuses.includes(status) || !payments.includes(paymentStatus)) bad('Invalid booking status');
 
-    const created = await db.transaction(async trx => {
-      const departure = await trx('departures').where({ tripId, date }).first();
+    let created;
+    try {
+      created = await db.transaction(async trx => {
+      const found = await trx('departures').where({ tripId, date }).first();
+      if (!found) bad('This departure is unavailable', 404);
+      const departure = await lockDeparture(trx, found.id);
       if (!departure) bad('This departure is unavailable', 404);
-      await trx('departures').where({ id: departure.id }).update({ updated_at: trx.fn.now() });
       const previousRequest = await trx('bookings').where({ requestKey: body.requestKey }).first();
       if (previousRequest) {
         if (previousRequest.tripId !== tripId || parseDate(previousRequest.date) !== date) bad('Booking request key is already in use', 409);
@@ -163,6 +193,10 @@ router.post('/', publicWriteLimiter, async (req, res) => {
       let groups = await trx('departure_groups').where({ departureId: departure.id }).orderBy('number');
       let group = groups[groups.length - 1];
       if (!group) bad('Departure group is missing', 409);
+
+      if (group.status === 'completed') {
+        bad('This departure group has already been completed', 409);
+      }
 
       // Seat capacity (Option B: the limit applies to each group, so a full
       // group rolls into a new one rather than refusing the booking).
@@ -195,7 +229,20 @@ router.post('/', publicWriteLimiter, async (req, res) => {
         bookedOn: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       });
       return { id, tripId: code };
-    });
+      });
+    } catch (err) {
+      if (isRequestKeyConflict(err)) {
+        // The competing request committed first — return its booking.
+        const previous = await db('bookings').where({ requestKey: body.requestKey }).first();
+        if (previous) {
+          if (previous.tripId !== tripId || parseDate(previous.date) !== date) {
+            return res.status(409).json({ error: 'Booking request key is already in use' });
+          }
+          return res.status(201).json({ id: previous.id, tripId: previous.instanceId });
+        }
+      }
+      throw err;
+    }
     res.status(201).json(created);
   } catch (err) { error(res, 'create booking', err); }
 });
@@ -219,24 +266,68 @@ router.put('/:id', requireAdmin, async (req, res) => {
     update.updated_at = db.fn.now();
 
     await db.transaction(async trx => {
-      const existing = await trx('bookings').where({ id: req.params.id }).first();
+      let existing = await trx('bookings').where({ id: req.params.id }).first();
       if (!existing) bad('Booking not found', 404);
 
-      // Cancelling frees seats, so bringing a cancelled booking back takes
-      // them again. Without this check an admin could reinstate past the
-      // group's limit and bypass the capacity rule entirely.
-      if (update.status && update.status !== 'Cancelled' && existing.status === 'Cancelled') {
-        const group = await trx('departure_groups').where({ id: existing.groupId }).first();
-        if (group) {
-          const departure = await trx('departures').where({ id: group.departureId }).first();
-          const trip = await trx('trips').where({ id: existing.tripId }).first();
-          const seatLimit = resolveSeatLimit(trip, departure);
-          if (seatLimit) {
-            const taken = await seatsTaken(trx, group.id);
-            const needed = Number(existing.travelers) || 1;
-            if (taken + needed > seatLimit) {
-              bad(`This group is at capacity (${taken} of ${seatLimit} seats taken). Cancel another booking or move this one to a new group.`, 409);
+      // Every status update for an assigned group must acquire the departure
+      // lock, even when the requested status appears not to change occupancy.
+      // This prevents decisions based on stale booking status.
+      if (update.status !== undefined) {
+        if (existing.groupId) {
+          const originalGroupId = existing.groupId;
+
+          const group = await trx('departure_groups')
+            .where({ id: originalGroupId })
+            .first();
+
+          if (!group) bad('Booking group not found', 409);
+
+          const departure = await lockDeparture(trx, group.departureId);
+          if (!departure) bad('Booking departure not found', 409);
+
+          // Reread after acquiring the lock.
+          existing = await trx('bookings')
+            .where({ id: req.params.id })
+            .first();
+
+          if (!existing) bad('Booking not found', 404);
+
+          // The booking must still belong to the group we locked.
+          if (existing.groupId !== originalGroupId) {
+            bad('Booking group changed; please retry', 409);
+          }
+
+          const nowOccupies = OCCUPYING_STATUSES.includes(existing.status);
+          const willOccupy = OCCUPYING_STATUSES.includes(update.status);
+
+          // Reinstating a cancelled booking consumes seats again.
+          if (!nowOccupies && willOccupy) {
+            const trip = await trx('trips')
+              .where({ id: existing.tripId })
+              .first();
+
+            const seatLimit = resolveSeatLimit(trip, departure);
+
+            if (seatLimit) {
+              const taken = await seatsTaken(trx, group.id);
+              const needed = Number(existing.travelers) || 1;
+
+              if (taken + needed > seatLimit) {
+                bad(
+                  `This group is at capacity (${taken} of ${seatLimit} seats taken). Cancel another booking or move this one to a new group.`,
+                  409
+                );
+              }
             }
+          }
+        } else {
+          // Legacy bookings without a group can be cancelled, but cannot
+          // be reinstated into an unknown capacity pool.
+          const nowOccupies = OCCUPYING_STATUSES.includes(existing.status);
+          const willOccupy = OCCUPYING_STATUSES.includes(update.status);
+
+          if (!nowOccupies && willOccupy) {
+            bad('Cannot reinstate a booking without an assigned departure group', 409);
           }
         }
       }
