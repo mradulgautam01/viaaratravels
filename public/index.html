@@ -1154,7 +1154,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const wrap=document.getElementById('enqFormWrap');
   if(wrap&&!wrap.innerHTML.trim())wrap.innerHTML=buildEnqForm('');
 
-  // Auto-popup: show once per session after 6 seconds
+  // Auto-popup: show once per session after 15 seconds
   if(!sessionStorage.getItem('viaara_enq_shown')){
     setTimeout(()=>{
       // Only open if no other modal/overlay is already open
@@ -1163,7 +1163,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         openEnq();
         sessionStorage.setItem('viaara_enq_shown','1');
       }
-    },6000);
+    },15000);
   }
 });
 
