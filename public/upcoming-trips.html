@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upcoming Trips · Viaara</title>
-  <link rel="icon" type="image/jpeg" href="/media/viaara-logo.jpg">
+  <link rel="icon" type="image/png" href="/media/viaara-logo.png">
   <script src="/trip-ui.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -39,7 +39,7 @@
       box-shadow:0 1px 0 rgba(0,0,0,0.08);
     }
     .nav-logo-wrap{display:flex;align-items:center;gap:0.625rem;text-decoration:none;}
-    .nav-logo-img{height:54px;width:128px;object-fit:cover;object-position:center 34%;flex-shrink:0;}
+    .nav-logo-img{height:54px;width:54px;object-fit:cover;border-radius:50%;flex-shrink:0;}
     .nav-links{list-style:none;display:flex;align-items:center;gap:2rem;}
     .nav-link{color:#1a1a1a;text-decoration:none;font-size:0.875rem;font-weight:400;letter-spacing:0.03em;transition:color 0.2s;}
     .nav-link:hover{color:#000;}
@@ -257,6 +257,300 @@
       .included-grid{grid-template-columns:1fr 1fr;}
     }
 
+    /* ===== VIAARA MINIMAL TRIP CARDS ===== */
+
+    .trip-card {
+      background: #fff;
+      border: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: none;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    .trip-card-img {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    .trip-card-img img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      transition: transform .35s ease;
+    }
+
+    .trip-card:hover .trip-card-img img {
+      transform: scale(1.025);
+    }
+
+    /* Title below image */
+    .trip-name-overlay {
+      position: static;
+      background: none;
+      padding: 12px 0 0;
+    }
+
+    .trip-name-overlay h3 {
+      color: var(--text);
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: 0;
+      max-width: 100%;
+      margin: 0;
+    }
+
+    /* Card information */
+    .trip-card-body {
+      padding: 9px 0 0;
+    }
+
+    .trip-destinations {
+      margin: 0 0 10px;
+    }
+
+    .trip-destinations .d-value {
+      font-size: .9rem;
+      font-weight: 400;
+      color: var(--text-m);
+      line-height: 1.45;
+    }
+
+    /* Duration and price */
+    .trip-minimal-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 13px;
+    }
+
+    .trip-minimal-duration {
+      font-size: .9rem;
+      color: var(--text-m);
+    }
+
+    .trip-minimal-price {
+      color: #e9823d;
+      font-size: 1.35rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .trip-minimal-price small {
+      display: block;
+      color: var(--text-m);
+      font-size: .7rem;
+      font-weight: 400;
+      text-align: right;
+    }
+
+    /* Departure dates */
+    .trip-batches {
+      margin-bottom: 14px;
+    }
+
+    .trip-batches-label {
+      font-size: .85rem;
+      color: var(--text-m);
+      margin-bottom: 8px;
+    }
+
+    .trip-batch-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .trip-batch-chip {
+      background: #edf7fa;
+      border: 1px solid #d8eaf0;
+      color: #429bb9;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    /* View Trip */
+    .trip-view-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 28px;
+      background: var(--green);
+      color: #fff;
+      padding: 12px 18px;
+      font-family: var(--font-ui);
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    .trip-view-btn:hover {
+      background: var(--green-d);
+    }
+
+    /* Responsive grids */
+    @media (max-width: 640px) {
+      .shortlist-grid,
+      .trips-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+      }
+
+      .shortlist-grid .trip-card-img img,
+      .trips-grid .trip-card-img img {
+        aspect-ratio: 16 / 9;
+      }
+
+      .trip-name-overlay {
+        padding-top: 12px;
+      }
+
+      .trip-name-overlay h3 {
+        font-size: 1.2rem;
+      }
+
+      .trip-card-body {
+        padding-top: 9px;
+      }
+    }
+
+    /* ===== VIAARA EQUAL-HEIGHT TRIP CARDS ===== */
+
+    /* Desktop grid rows stretch to the tallest card */
+    .shortlist-grid,
+    .trips-grid {
+      align-items: stretch;
+    }
+
+    /* Cards fill their available grid-row height */
+    .trip-card {
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+    }
+
+    /* Card content expands to fill available space */
+    .trip-card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+    }
+
+    /* Keep all original text and departure dates */
+    .trip-destinations {
+      margin-bottom: 10px;
+    }
+
+    .trip-batches {
+      margin-bottom: 14px;
+    }
+
+    /* Push CTA to the bottom of every card */
+    .trip-view-btn {
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+
+    /* Mobile: natural card height */
+    @media (max-width: 640px) {
+      .trip-card {
+        height: auto;
+      }
+    }
+
+    /* ===== COMPACT TRIP CARD INFORMATION ===== */
+
+    .trip-name-overlay {
+      padding-top: 9px;
+    }
+
+    .trip-name-overlay h3 {
+      line-height: 1.25;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .trip-card-body {
+      padding-top: 5px;
+    }
+
+    .trip-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 5px 0 11px;
+    }
+
+    .trip-info-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trip-destinations {
+      margin: 0 0 3px;
+    }
+
+    .trip-destinations .d-value {
+      font-size: .85rem;
+      line-height: 1.35;
+    }
+
+    .trip-minimal-duration {
+      display: block;
+      font-size: .8rem;
+      color: var(--text-m);
+    }
+
+    .trip-minimal-price {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .trip-minimal-price small {
+      font-size: .68rem;
+    }
+
+    .trip-batches {
+      margin-bottom: 10px;
+    }
+
+    .trip-batches-label {
+      font-size: .8rem;
+      margin-bottom: 6px;
+    }
+
+    .trip-batch-chip {
+      padding: 4px 10px;
+      font-size: .76rem;
+    }
+
+    .trip-batch-list {
+      gap: 6px;
+    }
+
+    .trip-view-btn {
+      padding: 10px 16px;
+      font-size: .9rem;
+    }
+
+    .trip-batch-chip.trip-batch-chip-next {
+      background: #e9823d;
+      border-color: #e9823d;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 0 2px rgba(233, 130, 61, 0.12), 0 0 14px rgba(233, 130, 61, 0.3);
+    }
+
   </style>
 </head>
 <body>
@@ -264,7 +558,7 @@
 <!-- NAV -->
 <nav>
   <a href="index.html" class="nav-logo-wrap">
-    <img src="/media/viaara-logo.jpg" alt="Viaara" class="nav-logo-img">
+    <img src="/media/viaara-logo.png" alt="Viaara" class="nav-logo-img">
   </a>
   <ul class="nav-links">
     <li><a href="index.html" class="nav-link">Home</a></li>
@@ -817,12 +1111,6 @@ document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); }
 
 <script>
 // Render trip cards dynamically from API data.
-function tripCardTitle(trip){
-  return String(trip.title || trip.location || '')
-    .split(/[:\-–]/)[0]
-    .trim();
-}
-
 function renderAdminTrips(){
   const grid = document.getElementById('tripsGrid');
   if(!grid) return;
@@ -835,44 +1123,67 @@ function renderAdminTrips(){
     return;
   }
 
-  const intensityDots = {'Relaxed':1,'Balanced':2,'Active':3,'Breathtaking':3};
-  const intensityMax = 3;
-
   setTimeout(renderPlaceFilter, 0);
   grid.innerHTML = activeTrips.map(t => {
-    const img = t.images && t.images[0] ? t.images[0] : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&w=700&q=75';
-    const dots = intensityDots[t.intensity] || 1;
-    const dotsHtml = Array.from({length:intensityMax},(_,i)=>`<span class="${i<dots?'active':''}"></span>`).join('');
-    const nextDate = t.dates && t.dates[0] ? t.dates[0] : '—';
+    const img = t.images && t.images[0]
+      ? t.images[0]
+      : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&w=700&q=75';
+
     const destinations = Array.isArray(t.destinations) && t.destinations.length
       ? t.destinations.join(' · ')
-      : (t.subLocation || t.location || '—');
+      : (t.subLocation || t.location || '');
     const cleanDestinations = destinations.replace(/\u00c2\u00b7/g, '·');
-    return `<div class="trip-card" data-type="${t.scope}" data-place="${escapeTripText(t.location||'')}" data-name="${escapeTripText(String(t.title||'').toLowerCase())}" onclick="openTripModal('${t.id}')" style="cursor:pointer">
+    const datesHtml = (Array.isArray(t.dates) ? t.dates : [])
+      .map((d, index) => `<span class="trip-batch-chip${index === 0 ? ' trip-batch-chip-next' : ''}">${escapeTripText(d)}</span>`)
+      .join('');
+    const tripId = escapeTripText(JSON.stringify(String(t.id == null ? '' : t.id)));
+
+    return `
+    <div class="trip-card"
+         data-type="${escapeTripText(t.scope || '')}"
+         data-place="${escapeTripText(t.location || '')}"
+         data-name="${escapeTripText(String(t.title || '').toLowerCase())}"
+         onclick="openTripModal(${tripId})">
+
       <div class="trip-card-img">
-        <img src="${img}" alt="${t.title}">
-        <div class="trip-name-overlay"><h3>${tripCardTitle(t)}</h3></div>
+        <img src="${escapeTripText(img)}" alt="${escapeTripText(t.title || 'Trip')}">
       </div>
+
+      <div class="trip-name-overlay">
+        <h3>${escapeTripText(t.title || '')}</h3>
+      </div>
+
       <div class="trip-card-body">
-        <div class="trip-date-box">
-          <div class="trip-date-info">
-            <span class="d-value">${escapeTripText(nextDate)}</span>
-            ${t.duration?`<span class="trip-duration">${escapeTripText(t.duration)}</span>`:''}
+
+        <div class="trip-info-row">
+          <div class="trip-info-left">
+            <div class="trip-destinations">
+              <span class="d-value">${escapeTripText(cleanDestinations)}</span>
+            </div>
+            <span class="trip-minimal-duration">
+              ${escapeTripText(t.duration || '')}
+            </span>
+          </div>
+
+          <div class="trip-minimal-price">
+            <small>Starting from</small>
+            ${escapeTripText(formatTripPrice(t.price))}
+            <small>/person</small>
           </div>
         </div>
-        <div class="trip-destinations"><span class="d-value">${escapeTripText(cleanDestinations)}</span></div>
-        <div class="trip-meta">
-          <div class="starting-from"><span class="sf-label">Starting From</span><span class="sf-price">${escapeTripText(formatTripPrice(t.price))}</span></div>
-          <div class="trip-intensity">
-            <span class="m-label">Intensity</span>
-            <span class="m-value">${t.intensity||'Relaxed'}</span>
-            <div class="intensity-bar">${dotsHtml}</div>
+
+        ${datesHtml ? `
+          <div class="trip-batches">
+            <div class="trip-batches-label">Upcoming Batches</div>
+            <div class="trip-batch-list">${datesHtml}</div>
           </div>
-        </div>
-        <div class="trip-footer">
-          ${t.completed?`<p class="trip-proof">${t.completed} trips completed</p>`:''}
-          <a href="#" class="btn-invite">Enquire Now</a>
-        </div>
+        ` : ''}
+
+        <button class="trip-view-btn"
+          onclick="event.stopPropagation();openTripModal(${tripId})">
+          View Trip &nbsp; ›
+        </button>
+
       </div>
     </div>`;
   }).join('');

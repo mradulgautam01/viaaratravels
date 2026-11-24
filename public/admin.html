@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Viaara · Admin</title>
-<link rel="icon" type="image/jpeg" href="/media/viaara-logo.jpg">
+<link rel="icon" type="image/png" href="/media/viaara-logo.png">
 <script src="/trip-ui.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -44,7 +44,7 @@ html,body{height:100%;font-family:"DM Sans",sans-serif;font-size:14px;color:var(
 .sidebar{width:var(--sidebar-w);background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;height:100vh;overflow-y:auto;position:fixed;top:0;left:0;bottom:0;z-index:100;}
 .sidebar::-webkit-scrollbar{width:4px;}.sidebar::-webkit-scrollbar-track{background:transparent;}.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px;}
 .sb-logo{padding:1rem 1rem 0.875rem;display:flex;align-items:center;gap:0.6rem;border-bottom:1px solid rgba(255,255,255,0.07);text-decoration:none;}
-.sb-logo img{width:88px;height:38px;object-fit:cover;object-position:center 34%;flex-shrink:0;}
+.sb-logo img{width:38px;height:38px;object-fit:cover;border-radius:50%;flex-shrink:0;}
 .sb-logo-sub{color:rgba(255,255,255,0.6);font-size:0.65rem;letter-spacing:0.06em;text-transform:uppercase;}
 .sb-vendor{padding:0.7rem 1rem;display:flex;align-items:center;gap:0.5rem;border-bottom:1px solid rgba(255,255,255,0.07);}
 .sb-vendor-avatar{width:30px;height:30px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:0.7rem;flex-shrink:0;}
@@ -546,9 +546,8 @@ td:first-child{padding-left:1.125rem;}
 
 <!-- LOGIN -->
 <div id="loginScreen">
-  <a href="index.html" style="position:absolute;top:1.5rem;left:1.75rem;display:flex;flex-direction:column;align-items:flex-start;gap:0.25rem;text-decoration:none;">
-    <img src="/media/viaara-logo.jpg" alt="Viaara" style="width:140px;height:60px;object-fit:cover;object-position:center 34%;">
-    <span style="color:rgba(255,255,255,0.85);font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;">You Go, We Plan</span>
+  <a href="index.html" style="position:absolute;top:1.5rem;left:1.75rem;display:flex;align-items:flex-start;text-decoration:none;">
+    <img src="/media/viaara-logo.png" alt="Viaara" style="width:64px;height:64px;object-fit:cover;border-radius:50%;">
   </a>
   <div class="login-card">
     <div style="margin-bottom:1.625rem;">
@@ -573,7 +572,7 @@ td:first-child{padding-left:1.125rem;}
     <!-- SIDEBAR -->
     <aside class="sidebar">
       <a href="index.html" class="sb-logo">
-        <img src="/media/viaara-logo.jpg" alt="Viaara">
+        <img src="/media/viaara-logo.png" alt="Viaara">
         <div>
           <div class="sb-logo-sub">Admin Panel</div>
         </div>

@@ -1,138 +1,250 @@
-/**
- * routes/upload.js — Image upload endpoint
- *
- * POST /api/upload
- * Accepts: multipart/form-data with field "image"
- * Returns: { url: "..." }
- *
- * Local:  saved to ./uploads/,       URL = /uploads/<filename>
- * S3:     uploaded to private S3,    URL = CloudFront/trips/<filename>
- *
- * Authorization (admin only) is enforced in server.js.
+﻿/**
+ * Viaara image upload endpoint
+ * Static images: optimized WebP
+ * GIF images: preserved as GIF to retain animation
  */
 
-const express  = require('express');
-const multer   = require('multer');
+const express = require('express');
+const multer = require('multer');
+const sharp = require('sharp');
 const { v4: uuidv4 } = require('uuid');
-const storage  = require('../lib/storage');
+const storage = require('../lib/storage');
 
 const router = express.Router();
 
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8 MB max
-const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
+const MAX_IMAGE_PIXELS = 80_000_000;
+const MAX_DIMENSION = 2000;
+const WEBP_QUALITY = 82;
+
+const ALLOWED_MIMES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+];
 
 class InvalidImageError extends Error {}
 
-const WEBP_CHUNK_IDS = new Set(['VP8 ', 'VP8L', 'VP8X']);
-
-// Structural WebP check (caller has already matched the RIFF/WEBP signature):
-// the RIFF size must match the buffer, and the first chunk must be a known
-// WebP image chunk whose declared length fits inside the file.
-function isValidWebp(buf) {
-  // 12-byte RIFF header + 8-byte chunk header
-  if (buf.length < 20) return false;
-
-  // RIFF size counts everything after the first 8 bytes
-  if (buf.readUInt32LE(4) + 8 !== buf.length) return false;
-
-  const chunkId = buf.toString('latin1', 12, 16);
-  if (!WEBP_CHUNK_IDS.has(chunkId)) return false;
-
-  const chunkLen = buf.readUInt32LE(16);
-  if (chunkLen === 0) return false;
-  if (chunkId === 'VP8X' && chunkLen !== 10) return false;
-
-  // Chunk data is padded to an even length; the padding must also fit
-  const chunkEnd = 20 + chunkLen + (chunkLen & 1);
-  return chunkEnd <= buf.length;
-}
-
-// Detect the real image type from the file's leading bytes.
-// Returns { ext, mime } or null when the buffer is not a supported image.
 function detectImageType(buf) {
   if (!Buffer.isBuffer(buf) || buf.length < 12) return null;
 
   if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) {
-    return { ext: '.jpg', mime: 'image/jpeg' };
+    return { format: 'jpeg', mime: 'image/jpeg' };
   }
-  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))) {
-    return { ext: '.png', mime: 'image/png' };
+
+  if (buf.subarray(0, 8).equals(
+    Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+  )) {
+    return { format: 'png', mime: 'image/png' };
   }
+
   const gifHeader = buf.toString('latin1', 0, 6);
   if (gifHeader === 'GIF87a' || gifHeader === 'GIF89a') {
-    return { ext: '.gif', mime: 'image/gif' };
+    return { format: 'gif', mime: 'image/gif' };
   }
-  if (buf.toString('latin1', 0, 4) === 'RIFF' && buf.toString('latin1', 8, 12) === 'WEBP') {
-    return isValidWebp(buf) ? { ext: '.webp', mime: 'image/webp' } : null;
+
+  if (
+    buf.toString('latin1', 0, 4) === 'RIFF' &&
+    buf.toString('latin1', 8, 12) === 'WEBP'
+  ) {
+    return { format: 'webp', mime: 'image/webp' };
   }
+
   return null;
 }
 
-// Use memory storage so we can pass the buffer directly to our storage abstraction
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits:  { fileSize: MAX_FILE_SIZE, files: 1 },
-  fileFilter: (req, file, cb) => {
-    // Cheap early rejection; the real check is the signature test in the handler.
-    if (ALLOWED_MIMES.includes(file.mimetype)) cb(null, true);
-    else cb(new InvalidImageError('Unsupported mimetype'));
+  limits: {
+    fileSize: MAX_FILE_SIZE,
+    files: 1
   },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIMES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new InvalidImageError('Unsupported image type'));
+    }
+  }
 });
 
-// Runs multer and maps its errors to appropriate, generic HTTP responses.
 function handleUpload(req, res, next) {
   upload.single('image')(req, res, err => {
     if (!err) return next();
 
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({ error: 'Image is too large (max 8 MB)' });
+        return res.status(413).json({
+          error: 'Image is too large (max 8 MB)'
+        });
       }
-      console.warn('[upload] Multer error:', err.code, err.message);
-      return res.status(400).json({ error: 'Invalid upload request' });
-    }
-    if (err instanceof InvalidImageError) {
-      console.warn('[upload] Rejected file:', err.message);
-      return res.status(415).json({ error: 'Only JPEG, PNG, WebP, and GIF images are allowed' });
+
+      console.warn('[upload] Multer error:', err.code);
+      return res.status(400).json({
+        error: 'Invalid upload request'
+      });
     }
 
-    // Malformed multipart bodies etc.
+    if (err instanceof InvalidImageError) {
+      return res.status(415).json({
+        error: 'Only JPEG, PNG, WebP, and GIF images are allowed'
+      });
+    }
+
     console.error('[upload] Upload parsing failed:', err);
-    res.status(400).json({ error: 'Invalid upload request' });
+    return res.status(400).json({
+      error: 'Invalid upload request'
+    });
   });
 }
 
-// ── POST /api/upload ──────────────────────────────────────────
-router.post('/', handleUpload, async (req, res) => {
-  try {
-    if (!req.file) return res.status(400).json({ error: 'No image file provided' });
+async function optimizeImage(buffer, detectedType) {
+  let image;
 
-    const type = detectImageType(req.file.buffer);
-    if (!type) {
-      console.warn('[upload] Rejected file: signature mismatch (declared %s)', req.file.mimetype);
-      return res.status(415).json({ error: 'Only JPEG, PNG, WebP, and GIF images are allowed' });
+  try {
+    image = sharp(buffer, {
+      failOn: 'error',
+      limitInputPixels: MAX_IMAGE_PIXELS
+    });
+
+    const metadata = await image.metadata();
+
+    if (
+      metadata.format !== detectedType.format ||
+      !metadata.width ||
+      !metadata.height ||
+      metadata.width * metadata.height > MAX_IMAGE_PIXELS
+    ) {
+      throw new InvalidImageError('Invalid image content or dimensions');
     }
 
-    const filename = `${uuidv4()}${type.ext}`;
+    // Preserve GIF files to avoid destroying animation.
+    if (detectedType.format === 'gif') {
+      return {
+        buffer,
+        extension: '.gif',
+        mime: 'image/gif',
+        originalSize: buffer.length,
+        optimizedSize: buffer.length,
+        preserved: true
+      };
+    }
 
-    const url = await storage.uploadFile(req.file.buffer, filename, type.mime);
-    res.json({ url });
+    const optimizedBuffer = await image
+      .rotate()
+      .resize({
+        width: MAX_DIMENSION,
+        height: MAX_DIMENSION,
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .webp({
+        quality: WEBP_QUALITY,
+        effort: 5
+      })
+      .toBuffer();
+
+    return {
+      buffer: optimizedBuffer,
+      extension: '.webp',
+      mime: 'image/webp',
+      originalSize: buffer.length,
+      optimizedSize: optimizedBuffer.length,
+      preserved: false
+    };
   } catch (err) {
+    if (err instanceof InvalidImageError) throw err;
+
+    throw new InvalidImageError('Image could not be decoded');
+  }
+}
+
+// POST /api/upload
+router.post('/', handleUpload, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'No image file provided'
+      });
+    }
+
+    const detectedType = detectImageType(req.file.buffer);
+
+    if (
+      !detectedType ||
+      detectedType.mime !== req.file.mimetype
+    ) {
+      return res.status(415).json({
+        error: 'Image content does not match its declared type'
+      });
+    }
+
+    const optimized = await optimizeImage(
+      req.file.buffer,
+      detectedType
+    );
+
+    const filename = `${uuidv4()}${optimized.extension}`;
+
+    const url = await storage.uploadFile(
+      optimized.buffer,
+      filename,
+      optimized.mime
+    );
+
+    const savings = optimized.preserved
+      ? 0
+      : Math.round(
+          (1 - optimized.optimizedSize / optimized.originalSize) * 100
+        );
+
+    console.info('[upload] Image processed:', {
+      format: optimized.mime,
+      originalKB: Math.round(optimized.originalSize / 1024),
+      outputKB: Math.round(optimized.optimizedSize / 1024),
+      savings: `${savings}%`,
+      animatedPreserved: optimized.preserved
+    });
+
+    res.json({ url });
+
+  } catch (err) {
+    if (err instanceof InvalidImageError) {
+      return res.status(415).json({
+        error: 'Invalid or unsupported image content'
+      });
+    }
+
     console.error('[upload] Upload failed:', err);
-    res.status(500).json({ error: 'Upload failed' });
+
+    res.status(500).json({
+      error: 'Upload failed'
+    });
   }
 });
 
-// ── DELETE /api/upload — remove an image by URL ──────────────
+// DELETE /api/upload
 router.delete('/', async (req, res) => {
   try {
     const { url } = req.body || {};
-    if (!url || typeof url !== 'string') return res.status(400).json({ error: 'url required' });
+
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({
+        error: 'url required'
+      });
+    }
+
     await storage.deleteFile(url);
+
     res.json({ ok: true });
+
   } catch (err) {
     console.error('[upload] Delete failed:', err);
-    res.status(500).json({ error: 'Delete failed' });
+
+    res.status(500).json({
+      error: 'Delete failed'
+    });
   }
 });
 

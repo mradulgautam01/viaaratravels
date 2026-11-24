@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Viaara · You Go, We Plan</title>
-  <link rel="icon" type="image/jpeg" href="/media/viaara-logo.jpg">
+  <link rel="icon" type="image/png" href="/media/viaara-logo.png">
   <script src="/trip-ui.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -213,9 +213,8 @@
       transition:background-color 0.3s,backdrop-filter 0.3s,border-color 0.3s;
     }
     nav.scrolled{background-color:rgba(8,13,10,0.82);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,0.12);}
-    .nav-logo-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:0.125rem;text-decoration:none;}
-    .nav-logo-img{height:64px;width:150px;object-fit:cover;object-position:center 34%;flex-shrink:0;}
-    .nav-brand-tagline{color:rgba(255,255,255,0.9);font-size:0.625rem;font-weight:700;letter-spacing:0.16em;line-height:1.2;text-transform:uppercase;}
+    .nav-logo-wrap{display:flex;align-items:center;text-decoration:none;}
+    .nav-logo-img{height:64px;width:64px;object-fit:cover;border-radius:50%;flex-shrink:0;}
     .nav-links{list-style:none;display:flex;align-items:center;gap:clamp(24px,2.5vw,36px);}
     .nav-link{color:rgba(255,255,255,0.9);text-decoration:none;font-size:0.875rem;font-weight:500;letter-spacing:0.02em;transition:color 0.2s;}
     .nav-link:hover{color:#fff;}
@@ -237,7 +236,7 @@
 
     /* HERO */
     .hero{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding:120px clamp(20px,4vw,64px) 52px clamp(16px,2.8vw,44px);overflow:hidden;}
-    .hero-bg{position:absolute;inset:0;background-image:url("/media/hero-poster.png");background-size:cover;background-position:center;animation:kb 22s ease-out forwards;}
+    .hero-bg{position:absolute;inset:0;background-image:url("/media/optimized/hero-poster.webp");background-size:cover;background-position:center;animation:kb 22s ease-out forwards;}
     /* Video sits over the poster. If it never loads, the poster is already there. */
     .hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border:0;pointer-events:none;}
     /* The source has 138px black bars above and below its 804px picture. */
@@ -352,6 +351,7 @@
     .footer-partner a{color:inherit;text-decoration:none;}
     .footer-partner a:hover{text-decoration:underline;}
     .footer-copyright p + p{margin-top:0.35rem;}
+    .footer-managed-name{display:inline;}
 
     /* Tablet */
     @media(max-width:1100px){
@@ -364,7 +364,14 @@
       footer{padding:2.5rem 1.25rem 1.25rem;}
       .footer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.5rem 1rem;}
       .footer-brand{grid-column:1 / -1;}
-      .footer-bottom{flex-direction:column;align-items:flex-start;gap:0.5rem;}
+      .footer-bottom{flex-direction:row;align-items:flex-start;flex-wrap:nowrap;gap:0.5rem;}
+      .footer-bottom p{font-size:0.75rem;overflow-wrap:anywhere;}
+      .footer-copyright,.footer-partner{flex:1 1 0;min-width:0;}
+      .footer-copyright{flex-grow:1.25;}
+      .footer-copyright p:first-child{font-size:0.6875rem;white-space:nowrap;}
+      .footer-partner{text-align:right;}
+      .footer-managed-label::after{content:":";}
+      .footer-managed-name{display:block;}
     }
 
     /* RESPONSIVE */
@@ -386,7 +393,7 @@
       .hero-sub{font-size:0.9375rem;margin-bottom:18px;}
       .hero-actions{gap:10px;}
       nav{height:96px;padding-left:14px;padding-right:20px;}
-      .nav-logo-img{width:126px;height:54px;}
+      .nav-logo-img{width:54px;height:54px;}
       .mosaic{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr);gap:6px;padding:6px;}
       .nav-links{display:none;}
       .nav-hamburger{display:flex;}
@@ -586,6 +593,300 @@
 .t-author{font-size:0.8125rem;font-weight:700;color:var(--text);}
 .t-trip{font-size:0.75rem;color:var(--green);font-weight:500;margin-top:0.1rem;}
 
+    /* ===== VIAARA MINIMAL TRIP CARDS ===== */
+
+    .trip-card {
+      background: #fff;
+      border: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: none;
+      cursor: pointer;
+      min-width: 0;
+    }
+
+    .trip-card-img {
+      position: relative;
+      overflow: hidden;
+      border-radius: 10px;
+    }
+
+    .trip-card-img img {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      transition: transform .35s ease;
+    }
+
+    .trip-card:hover .trip-card-img img {
+      transform: scale(1.025);
+    }
+
+    /* Title below image */
+    .trip-name-overlay {
+      position: static;
+      background: none;
+      padding: 12px 0 0;
+    }
+
+    .trip-name-overlay h3 {
+      color: var(--text);
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: 0;
+      max-width: 100%;
+      margin: 0;
+    }
+
+    /* Card information */
+    .trip-card-body {
+      padding: 9px 0 0;
+    }
+
+    .trip-destinations {
+      margin: 0 0 10px;
+    }
+
+    .trip-destinations .d-value {
+      font-size: .9rem;
+      font-weight: 400;
+      color: var(--text-m);
+      line-height: 1.45;
+    }
+
+    /* Duration and price */
+    .trip-minimal-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 13px;
+    }
+
+    .trip-minimal-duration {
+      font-size: .9rem;
+      color: var(--text-m);
+    }
+
+    .trip-minimal-price {
+      color: #e9823d;
+      font-size: 1.35rem;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .trip-minimal-price small {
+      display: block;
+      color: var(--text-m);
+      font-size: .7rem;
+      font-weight: 400;
+      text-align: right;
+    }
+
+    /* Departure dates */
+    .trip-batches {
+      margin-bottom: 14px;
+    }
+
+    .trip-batches-label {
+      font-size: .85rem;
+      color: var(--text-m);
+      margin-bottom: 8px;
+    }
+
+    .trip-batch-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .trip-batch-chip {
+      background: #edf7fa;
+      border: 1px solid #d8eaf0;
+      color: #429bb9;
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    /* View Trip */
+    .trip-view-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 28px;
+      background: var(--green);
+      color: #fff;
+      padding: 12px 18px;
+      font-family: var(--font-ui);
+      font-size: .95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s ease;
+    }
+
+    .trip-view-btn:hover {
+      background: var(--green-d);
+    }
+
+    /* Responsive grids */
+    @media (max-width: 640px) {
+      .shortlist-grid,
+      .trips-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 28px;
+      }
+
+      .shortlist-grid .trip-card-img img,
+      .trips-grid .trip-card-img img {
+        aspect-ratio: 16 / 9;
+      }
+
+      .trip-name-overlay {
+        padding-top: 12px;
+      }
+
+      .trip-name-overlay h3 {
+        font-size: 1.2rem;
+      }
+
+      .trip-card-body {
+        padding-top: 9px;
+      }
+    }
+
+    /* ===== VIAARA EQUAL-HEIGHT TRIP CARDS ===== */
+
+    /* Desktop grid rows stretch to the tallest card */
+    .shortlist-grid,
+    .trips-grid {
+      align-items: stretch;
+    }
+
+    /* Cards fill their available grid-row height */
+    .trip-card {
+      display: flex;
+      flex-direction: column;
+      align-self: stretch;
+    }
+
+    /* Card content expands to fill available space */
+    .trip-card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+    }
+
+    /* Keep all original text and departure dates */
+    .trip-destinations {
+      margin-bottom: 10px;
+    }
+
+    .trip-batches {
+      margin-bottom: 14px;
+    }
+
+    /* Push CTA to the bottom of every card */
+    .trip-view-btn {
+      margin-top: auto;
+      flex-shrink: 0;
+    }
+
+    /* Mobile: natural card height */
+    @media (max-width: 640px) {
+      .trip-card {
+        height: auto;
+      }
+    }
+
+    /* ===== COMPACT TRIP CARD INFORMATION ===== */
+
+    .trip-name-overlay {
+      padding-top: 9px;
+    }
+
+    .trip-name-overlay h3 {
+      line-height: 1.25;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .trip-card-body {
+      padding-top: 5px;
+    }
+
+    .trip-info-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 5px 0 11px;
+    }
+
+    .trip-info-left {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .trip-destinations {
+      margin: 0 0 3px;
+    }
+
+    .trip-destinations .d-value {
+      font-size: .85rem;
+      line-height: 1.35;
+    }
+
+    .trip-minimal-duration {
+      display: block;
+      font-size: .8rem;
+      color: var(--text-m);
+    }
+
+    .trip-minimal-price {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .trip-minimal-price small {
+      font-size: .68rem;
+    }
+
+    .trip-batches {
+      margin-bottom: 10px;
+    }
+
+    .trip-batches-label {
+      font-size: .8rem;
+      margin-bottom: 6px;
+    }
+
+    .trip-batch-chip {
+      padding: 4px 10px;
+      font-size: .76rem;
+    }
+
+    .trip-batch-list {
+      gap: 6px;
+    }
+
+    .trip-view-btn {
+      padding: 10px 16px;
+      font-size: .9rem;
+    }
+
+    .trip-batch-chip.trip-batch-chip-next {
+      background: #e9823d;
+      border-color: #e9823d;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 0 0 2px rgba(233, 130, 61, 0.12), 0 0 14px rgba(233, 130, 61, 0.3);
+    }
+
     </style>
 </head>
 <body>
@@ -593,8 +894,7 @@
 <!-- NAV -->
 <nav id="navbar">
   <a href="#" class="nav-logo-wrap">
-    <img src="/media/viaara-logo.jpg" alt="Viaara" class="nav-logo-img">
-    <span class="nav-brand-tagline">You Go, We Plan</span>
+    <img src="/media/viaara-logo.png" alt="Viaara" class="nav-logo-img">
   </a>
   <ul class="nav-links">
     <li><a href="#" class="nav-link">Home</a></li>
@@ -629,7 +929,7 @@ function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('o
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg"></div>
-  <video class="hero-video" id="heroVideo" poster="/media/hero-poster.png"
+  <video class="hero-video" id="heroVideo" poster="/media/optimized/hero-poster.webp"
          muted autoplay loop playsinline preload="metadata" aria-hidden="true" tabindex="-1"></video>
   <div class="hero-overlay"></div>
   <div class="hero-content">
@@ -675,29 +975,29 @@ function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('o
 <div class="marquee-section">
   <p class="marquee-label">Viaara Memories</p>
   <div class="marquee-track">
-    <img class="marquee-photo" style="width:280px" src="/media/destinations/destination-01.jpg" alt="">
-    <img class="marquee-photo" style="width:180px" src="/media/destinations/destination-02.jpg" alt="">
-    <img class="marquee-photo" style="width:240px" src="/media/destinations/destination-03.jpg" alt="">
-    <img class="marquee-photo" style="width:300px" src="/media/destinations/destination-04.jpg" alt="">
-    <img class="marquee-photo" style="width:200px" src="/media/destinations/destination-05.jpg" alt="">
-    <img class="marquee-photo" style="width:260px" src="/media/destinations/destination-06.jpg" alt="">
-    <img class="marquee-photo" style="width:220px" src="/media/destinations/destination-07.jpg" alt="">
-    <img class="marquee-photo" style="width:290px" src="/media/destinations/destination-08.jpg" alt="">
-    <img class="marquee-photo" style="width:190px" src="/media/destinations/destination-09.jpg" alt="">
-    <img class="marquee-photo" style="width:240px" src="/media/destinations/destination-10.jpg" alt="">
-    <img class="marquee-photo" style="width:260px" src="/media/destinations/destination-11.jpg" alt="">
+    <img class="marquee-photo" style="width:280px" src="/media/optimized/destinations/destination-01.webp" alt="">
+    <img class="marquee-photo" style="width:180px" src="/media/optimized/destinations/destination-02.webp" alt="">
+    <img class="marquee-photo" style="width:240px" src="/media/optimized/destinations/destination-03.webp" alt="">
+    <img class="marquee-photo" style="width:300px" src="/media/optimized/destinations/destination-04.webp" alt="">
+    <img class="marquee-photo" style="width:200px" src="/media/optimized/destinations/destination-05.webp" alt="">
+    <img class="marquee-photo" style="width:260px" src="/media/optimized/destinations/destination-06.webp" alt="">
+    <img class="marquee-photo" style="width:220px" src="/media/optimized/destinations/destination-07.webp" alt="">
+    <img class="marquee-photo" style="width:290px" src="/media/optimized/destinations/destination-08.webp" alt="">
+    <img class="marquee-photo" style="width:190px" src="/media/optimized/destinations/destination-09.webp" alt="">
+    <img class="marquee-photo" style="width:240px" src="/media/optimized/destinations/destination-10.webp" alt="">
+    <img class="marquee-photo" style="width:260px" src="/media/optimized/destinations/destination-11.webp" alt="">
     <!-- duplicate for seamless loop -->
-    <img class="marquee-photo" style="width:280px" src="/media/destinations/destination-01.jpg" alt="">
-    <img class="marquee-photo" style="width:180px" src="/media/destinations/destination-02.jpg" alt="">
-    <img class="marquee-photo" style="width:240px" src="/media/destinations/destination-03.jpg" alt="">
-    <img class="marquee-photo" style="width:300px" src="/media/destinations/destination-04.jpg" alt="">
-    <img class="marquee-photo" style="width:200px" src="/media/destinations/destination-05.jpg" alt="">
-    <img class="marquee-photo" style="width:260px" src="/media/destinations/destination-06.jpg" alt="">
-    <img class="marquee-photo" style="width:220px" src="/media/destinations/destination-07.jpg" alt="">
-    <img class="marquee-photo" style="width:290px" src="/media/destinations/destination-08.jpg" alt="">
-    <img class="marquee-photo" style="width:190px" src="/media/destinations/destination-09.jpg" alt="">
-    <img class="marquee-photo" style="width:240px" src="/media/destinations/destination-10.jpg" alt="">
-    <img class="marquee-photo" style="width:260px" src="/media/destinations/destination-11.jpg" alt="">
+    <img class="marquee-photo" style="width:280px" src="/media/optimized/destinations/destination-01.webp" alt="">
+    <img class="marquee-photo" style="width:180px" src="/media/optimized/destinations/destination-02.webp" alt="">
+    <img class="marquee-photo" style="width:240px" src="/media/optimized/destinations/destination-03.webp" alt="">
+    <img class="marquee-photo" style="width:300px" src="/media/optimized/destinations/destination-04.webp" alt="">
+    <img class="marquee-photo" style="width:200px" src="/media/optimized/destinations/destination-05.webp" alt="">
+    <img class="marquee-photo" style="width:260px" src="/media/optimized/destinations/destination-06.webp" alt="">
+    <img class="marquee-photo" style="width:220px" src="/media/optimized/destinations/destination-07.webp" alt="">
+    <img class="marquee-photo" style="width:290px" src="/media/optimized/destinations/destination-08.webp" alt="">
+    <img class="marquee-photo" style="width:190px" src="/media/optimized/destinations/destination-09.webp" alt="">
+    <img class="marquee-photo" style="width:240px" src="/media/optimized/destinations/destination-10.webp" alt="">
+    <img class="marquee-photo" style="width:260px" src="/media/optimized/destinations/destination-11.webp" alt="">
   </div>
 </div>
 
@@ -725,12 +1025,12 @@ function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('o
 <!-- CAN'T PICK -->
 <section class="cant-pick" id="why">
   <div class="mosaic">
-    <img src="/media/cant-pick/background-01.png" alt="">
-    <img src="/media/cant-pick/background-02.png" alt="">
-    <img src="/media/cant-pick/background-03.png" alt="">
-    <img src="/media/cant-pick/background-04.png" alt="">
-    <img src="/media/cant-pick/background-05.png" alt="">
-    <img src="/media/cant-pick/background-06.png" alt="">
+    <img src="/media/optimized/cant-pick/background-01.webp" alt="">
+    <img src="/media/optimized/cant-pick/background-02.webp" alt="">
+    <img src="/media/optimized/cant-pick/background-03.webp" alt="">
+    <img src="/media/optimized/cant-pick/background-04.webp" alt="">
+    <img src="/media/optimized/cant-pick/background-05.webp" alt="">
+    <img src="/media/optimized/cant-pick/background-06.webp" alt="">
   </div>
   <div class="cant-pick-overlay"></div>
   <div class="cant-pick-content fade-up">
@@ -768,7 +1068,7 @@ function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('o
 <footer id="contact">
   <div class="footer-grid">
     <div class="footer-brand">
-      <img src="/media/viaara-logo.jpg" alt="Viaara" style="height:52px;width:122px;object-fit:cover;object-position:center 34%;">
+      <img src="/media/viaara-logo.png" alt="Viaara" style="height:52px;width:52px;object-fit:cover;border-radius:50%;">
       <p class="footer-brand-desc">You go, we plan. Viaara designs and manages custom travel experiences — end to end — so you can focus on the journey.</p>
       <button onclick="openEnq()" class="btn-fill" style="margin-top:1.25rem">Send us an Enquiry →</button>
     </div>
@@ -839,7 +1139,7 @@ function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('o
   <div class="footer-bottom">
     <div class="footer-copyright">
       <p>© 2026 Viaara. All rights reserved.</p>
-      <p>Managed by TP Global Travels LLP</p>
+      <p><span class="footer-managed-label">Managed by</span> <span class="footer-managed-name">TP Global Travels LLP</span></p>
     </div>
     <div class="footer-partner">
       <p>TECHNICAL PARTNER</p>
@@ -1364,38 +1664,63 @@ function renderSpecials(){
 
   if(section) section.style.display = ''; // cards exist — reveal section
   grid.innerHTML = specials.map(t => {
-    const img = (t.images && t.images[0]) || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&w=700&q=75';
-    const dateStr = firstDate(t);
+    const img = (t.images && t.images[0]) ||
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&w=700&q=75';
+
     const destinations = Array.isArray(t.destinations) && t.destinations.length
       ? t.destinations.join(' · ')
-      : (t.subLocation || t.location || '—');
+      : (t.subLocation || t.location || '');
     const cleanDestinations = destinations.replace(/\u00c2\u00b7/g, '·');
-    const intensity = t.intensity || 'Relaxed';
-    return `<div class="trip-card fade-up" data-type="${t.scope||'local'}" data-name="${(t.title||'').toLowerCase()}" onclick="openTripModal('${t.id}')" style="cursor:pointer">
+    const datesHtml = (Array.isArray(t.dates) ? t.dates : [])
+      .map((d, index) => `<span class="trip-batch-chip${index === 0 ? ' trip-batch-chip-next' : ''}">${escapeTripText(d)}</span>`)
+      .join('');
+    const tripId = escapeTripText(JSON.stringify(String(t.id == null ? '' : t.id)));
+
+    return `
+    <div class="trip-card fade-up"
+         data-type="${escapeTripText(t.scope || 'local')}"
+         data-name="${escapeTripText((t.title || '').toLowerCase())}"
+         onclick="openTripModal(${tripId})">
+
       <div class="trip-card-img">
-        <img src="${img}" alt="${t.title}">
-        <div class="trip-name-overlay"><h3>${shortName(t)}</h3></div>
+        <img src="${escapeTripText(img)}" alt="${escapeTripText(t.title || 'Trip')}">
       </div>
+
+      <div class="trip-name-overlay">
+        <h3>${escapeTripText(t.title || '')}</h3>
+      </div>
+
       <div class="trip-card-body">
-        <div class="trip-date-box">
-          <div class="trip-date-info">
-            <span class="d-value">${dateStr || '—'}</span>
-            ${t.duration?`<span class="trip-duration">${escapeTripText(t.duration)}</span>`:''}
+
+        <div class="trip-info-row">
+          <div class="trip-info-left">
+            <div class="trip-destinations">
+              <span class="d-value">${escapeTripText(cleanDestinations)}</span>
+            </div>
+            <span class="trip-minimal-duration">
+              ${escapeTripText(t.duration || '')}
+            </span>
+          </div>
+
+          <div class="trip-minimal-price">
+            <small>Starting from</small>
+            ${escapeTripText(formatTripPrice(t.price))}
+            <small>/person</small>
           </div>
         </div>
-        <div class="trip-destinations"><span class="d-value">${escapeTripText(cleanDestinations)}</span></div>
-        <div class="trip-meta">
-          <div class="starting-from"><span class="sf-label">Starting From</span><span class="sf-price">${escapeTripText(formatTripPrice(t.price))}</span></div>
-          <div class="trip-intensity">
-            <span class="m-label">Intensity</span>
-            <span class="m-value">${intensity}</span>
-            <div class="intensity-bar">${bars(intensity)}</div>
+
+        ${datesHtml ? `
+          <div class="trip-batches">
+            <div class="trip-batches-label">Upcoming Batches</div>
+            <div class="trip-batch-list">${datesHtml}</div>
           </div>
-        </div>
-        <div class="trip-footer">
-          ${t.completed?`<p class="trip-proof">${t.completed} trips completed</p>`:''}
-          <a href="#" class="link-cta" onclick="event.preventDefault();event.stopPropagation();openEnq('${(t.title||'').replace(/'/g,'\\\'') }')">Enquire Now</a>
-        </div>
+        ` : ''}
+
+        <button class="trip-view-btn"
+          onclick="event.stopPropagation();openTripModal(${tripId})">
+          View Trip &nbsp; ›
+        </button>
+
       </div>
     </div>`;
   }).join('\n');
