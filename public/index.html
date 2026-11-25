@@ -248,6 +248,12 @@
       pointer-events: none;
     }
 
+    /* Hide the video element on tablet and mobile; show poster only. */
+    @media (max-width: 1100px) {
+      .hero-video {
+        display: none;
+      }
+    }
     /* Reserve the final video crop before playback to prevent CLS */
     @media (min-width: 1101px) {
       .hero-video {
