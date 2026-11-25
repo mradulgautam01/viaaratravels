@@ -80,6 +80,7 @@ app.use('/api/trips',     require('./routes/trips'));
 app.use('/api/bookings',  require('./routes/bookings'));
 app.use('/api/leads',     require('./routes/leads'));
 app.use('/api/analytics', require('./routes/analytics'));
+app.use('/api/reviews',   require('./routes/reviews'));
 app.use('/api/upload',    requireAdmin, require('./routes/upload'));
 
 // ── Cron — instance auto-creation ────────────────────────────
