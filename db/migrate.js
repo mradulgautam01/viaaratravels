@@ -127,6 +127,13 @@ async function migrate() {
     });
   }
 
+  // Add email to existing testimonials tables safely.
+  if (!(await db.schema.hasColumn('testimonials', 'email'))) {
+    await db.schema.alterTable('testimonials', t => {
+      t.string('email').defaultTo('');
+    });
+  }
+
   console.log('✓ Migrations complete.');
 }
 

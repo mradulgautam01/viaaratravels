@@ -2124,35 +2124,54 @@ async function submitBooking(e){
   ];
   var AVATAR_COLORS=["#1f7a4a","#2563eb","#9333ea","#d97706","#dc2626","#0891b2"];
   function avatarColor(name){var i=name.charCodeAt(0)%AVATAR_COLORS.length;return AVATAR_COLORS[i];}
-  function renderTestimonials(){
+  function escapeReviewHtml(value){
+    return String(value == null ? '' : value).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function renderTestimonials(reviews){
     var track=document.getElementById('testimonialsTrack');
     if(!track)return;
-    var stored=null;
-    try{stored=JSON.parse(localStorage.getItem('viaara_testimonials'));}catch(e){}
-    var all_stored=(stored&&stored.length)?stored:DEFAULTS;
-    var list=all_stored.filter(function(t){return !t.status||t.status==="published";});
-    if(!list.length)list=DEFAULTS.filter(function(t){return !t.status||t.status==="published";});
-    // duplicate for seamless loop
+    var list=DEFAULTS.concat(reviews || []);
     var all=list.concat(list);
     track.innerHTML=all.map(function(t){
-      var init=t.name.charAt(0).toUpperCase();
-      var stars='★'.repeat(t.stars||5);
+      var rawName=t.name || 'Viaara traveller';
+      var name=escapeReviewHtml(rawName);
+      var trip=escapeReviewHtml(t.trip || 'Viaara trip');
+      var quote=escapeReviewHtml(t.quote || '');
+      var init=escapeReviewHtml(rawName.charAt(0).toUpperCase());
+      var stars='★'.repeat(Math.max(1,Math.min(5,Number(t.stars)||5)));
       return '<div class="t-card">'+
         '<div style="display:flex;align-items:center;gap:1rem;">'+
-          '<div class="t-avatar" style="background:'+avatarColor(t.name)+'">'+init+'</div>'+
-          '<div><div class="t-author">'+t.name+'</div><div class="t-trip">'+t.trip+'</div></div>'+
+          '<div class="t-avatar" style="background:'+avatarColor(rawName)+'">'+init+'</div>'+
+          '<div><div class="t-author">'+name+'</div><div class="t-trip">'+trip+'</div></div>'+
         '</div>'+
         '<div class="t-stars">'+stars+'</div>'+
-        '<p class="t-quote">&ldquo;'+t.quote+'&rdquo;</p>'+
+        '<p class="t-quote">&ldquo;'+quote+'&rdquo;</p>'+
       '</div>';
     }).join('');
-    // reset animation
     track.style.animation='none';
     track.offsetHeight;
     track.style.animation='';
   }
-  renderTestimonials();
-  window.addEventListener('storage',function(e){if(e.key==='viaara_testimonials')renderTestimonials();});
+
+  async function loadTestimonials(){
+    try{
+      var response=await fetch('/api/reviews/public',{credentials:'same-origin'});
+      if(!response.ok)throw new Error('Could not load reviews');
+
+      var reviews=await response.json();
+      if(!Array.isArray(reviews))throw new Error('Invalid reviews response');
+
+      renderTestimonials(reviews);
+    }catch(err){
+      console.warn('[Viaara] Reviews unavailable:',err.message);
+      renderTestimonials([]);
+    }
+  }
+
+  loadTestimonials();
 })();
 </script>
 
@@ -2218,33 +2237,53 @@ function setStars(n){
     s.classList.toggle('active',parseInt(s.dataset.v)<=n);
   });
 }
-var RV_DEFS=[
-  {id:1,name:"Priya S.",email:"",trip:"Meghalaya trip",quote:"The Meghalaya trip was life-changing — the root bridges, the people, the food. Viaara made every detail seamless.",stars:5,status:"published",date:"Default"},
-  {id:2,name:"Rahul M.",email:"",trip:"Goa – Gokarna trip",quote:"First group trip I ever did and I was honestly nervous. Viaara made it so easy — Goa to Gokarna was just incredible.",stars:5,status:"published",date:"Default"},
-  {id:3,name:"Ananya K.",email:"",trip:"Udaipur trip",quote:"Udaipur in 3 days felt surprisingly complete. Great curation, zero stress. Already booked my next trip with Viaara.",stars:5,status:"published",date:"Default"},
-  {id:4,name:"Siddharth V.",email:"",trip:"Meghalaya trip",quote:"Never travelled in a group before — Viaara changed that. Everything was sorted, the vibe was great, Meghalaya blew my mind.",stars:5,status:"published",date:"Default"},
-  {id:5,name:"Nisha T.",email:"",trip:"Goa – Gokarna trip",quote:"The sunset yacht cruise in Goa was worth the trip alone. Viaara handled everything — we just showed up and enjoyed.",stars:5,status:"published",date:"Default"}
-];
-function submitPublicReview(e){
+async function submitPublicReview(e){
   e.preventDefault();
+
+  var form=e.currentTarget;
+  var button=form.querySelector('button[type="submit"]');
+
   var review={
-    id:Date.now(),
     name:document.getElementById('pubRvName').value.trim(),
     email:document.getElementById('pubRvEmail').value.trim(),
-    trip:document.getElementById('pubRvTrip').value.trim()||'Viaara trip',
+    trip:document.getElementById('pubRvTrip').value.trim() || 'Viaara trip',
     quote:document.getElementById('pubRvQuote').value.trim(),
-    stars:parseInt(document.getElementById('pubRvStars').value)||5,
-    status:'pending',
-    date:new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric'})
+    stars:parseInt(document.getElementById('pubRvStars').value,10) || 5
   };
+
+  if(button.disabled)return;
+
+  button.disabled=true;
+  button.textContent='Submitting...';
+
   try{
-    var stored=JSON.parse(localStorage.getItem('viaara_testimonials'));
-    var list=(stored&&stored.length)?stored:JSON.parse(JSON.stringify(RV_DEFS));
-    list.push(review);
-    localStorage.setItem('viaara_testimonials',JSON.stringify(list));
-  }catch(err){}
-  document.getElementById('rvPubWrap').innerHTML='<div style="text-align:center;padding:2rem 1rem;"><div style="font-size:2.5rem;margin-bottom:1rem;">&#128591;</div><h3 style="font-family:var(--font-ui);font-size:1.25rem;font-weight:700;color:#1f7a4a;margin-bottom:0.5rem;">Thank you!</h3><p style="font-size:0.9rem;color:#666;line-height:1.6;">Your review has been submitted and will appear on our site once approved by the team.</p></div>';
-  setTimeout(function(){closeRvPub();},3000);
+    var response=await fetch('/api/reviews',{
+      method:'POST',
+      credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(review)
+    });
+
+    if(!response.ok){
+      var result;
+      try{result=await response.json();}
+      catch(err){console.warn('[Viaara] Invalid review error response:',err);}
+      throw new Error(result && result.error || 'Could not submit your review');
+    }
+
+    document.getElementById('rvPubWrap').innerHTML=
+      '<div style="text-align:center;padding:2rem 1rem;">'+
+      '<div style="font-size:2.5rem;margin-bottom:1rem;">&#128591;</div>'+
+      '<h3 style="font-family:var(--font-ui);font-size:1.25rem;font-weight:700;color:#1f7a4a;margin-bottom:0.5rem;">Thank you!</h3>'+
+      '<p style="font-size:0.9rem;color:#666;line-height:1.6;">Your review has been submitted and will appear on our site once approved by the team.</p>'+
+      '</div>';
+
+    setTimeout(function(){closeRvPub();},3000);
+  }catch(err){
+    alert(err.message || 'Unable to submit your review. Please try again.');
+    button.disabled=false;
+    button.textContent='Submit Review →';
+  }
 }
 </script>
 

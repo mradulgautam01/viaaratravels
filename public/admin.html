@@ -796,6 +796,8 @@ td:first-child{padding-left:1.125rem;}
                       <option value="5">★★★★★ (5 stars)</option>
                       <option value="4">★★★★☆ (4 stars)</option>
                       <option value="3">★★★☆☆ (3 stars)</option>
+                      <option value="2">★★☆☆☆ (2 stars)</option>
+                      <option value="1">★☆☆☆☆ (1 star)</option>
                     </select>
                   </div>
                   <div><label class="form-label">Status</label>
@@ -1135,7 +1137,7 @@ function showPage(page,force){
   if(page==='trips')renderTrips();
   else if(page==='departures')renderDepartures();
   else if(page==='leads')loadLeads();
-  else if(page==='reviews')renderReviews();
+  else if(page==='reviews')loadReviews();
   else if(page==='bookings')loadBookings();
   updateLeadsBadge();
   updateBookingsBadge();
@@ -2670,73 +2672,169 @@ async function etHandleFiles(fileList){
 }
 
 /* -- REVIEWS -- */
-var REVIEW_DEFAULTS=[
-  {id:1,name:"Priya S.",email:"",trip:"Meghalaya trip",quote:"The Meghalaya trip was life-changing — the root bridges, the people, the food. Viaara made every detail seamless. Didn't have to think about a thing.",stars:5,status:"published",date:"Default"},
-  {id:2,name:"Rahul M.",email:"",trip:"Goa – Gokarna trip",quote:"First group trip I ever did and I was honestly nervous. The Viaara team made it so easy — Goa to Gokarna was just incredible. Can't wait for the next one.",stars:5,status:"published",date:"Default"},
-  {id:3,name:"Ananya K.",email:"",trip:"Udaipur trip",quote:"Udaipur in 3 days felt surprisingly complete. Great curation, zero stress, and the rooftop dinner on Day 2 was something else. Already booked my next trip with Viaara.",stars:5,status:"published",date:"Default"},
-  {id:4,name:"Siddharth V.",email:"",trip:"Meghalaya trip",quote:"Never travelled in a group before — Viaara changed that. Everything was sorted, the vibe was great, and Meghalaya blew my mind. 10/10 would do it again.",stars:5,status:"published",date:"Default"},
-  {id:5,name:"Nisha T.",email:"",trip:"Goa – Gokarna trip",quote:"The sunset yacht cruise in Goa was worth the trip alone. Viaara handled everything — we just showed up and enjoyed. Already planning the next one.",stars:5,status:"published",date:"Default"}
-];
-function getReviews(){
-  try{var r=JSON.parse(localStorage.getItem('viaara_testimonials'));return(r&&r.length)?r:JSON.parse(JSON.stringify(REVIEW_DEFAULTS));}
-  catch(e){return JSON.parse(JSON.stringify(REVIEW_DEFAULTS));}
+let _reviews=[];
+let _reviewsState='idle';
+let _reviewsError='';
+let _reviewsLoadSeq=0;
+const _reviewsBusy=new Set();
+
+var RV_STATUS_STYLE={
+  published:"background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;",
+  pending:"background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;",
+  rejected:"background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;"
+};
+
+function rvEscape(value){
+  return String(value==null?'':value).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
-function saveReviews(list){safeSetItem('viaara_testimonials',JSON.stringify(list));}
-var RV_STATUS_STYLE={published:"background:#d1fae5;color:#065f46;border:1.5px solid #6ee7b7;",pending:"background:#fef3c7;color:#92400e;border:1.5px solid #fcd34d;",rejected:"background:#fee2e2;color:#991b1b;border:1.5px solid #fca5a5;"};
+
+async function reviewsApiCall(method,path,body){
+  const opts={method,credentials:'same-origin'};
+  if(body!==undefined){
+    opts.headers={'Content-Type':'application/json'};
+    opts.body=JSON.stringify(body);
+  }
+  const response=await fetch('/api/reviews'+path,opts);
+  if(response.status===401){
+    _reviews=[];
+    _reviewsState='idle';
+    showLogin();
+    throw new Error('Session expired — please log in again');
+  }
+  if(!response.ok){
+    let result;
+    try{result=await response.json();}
+    catch(err){console.warn('[Viaara] Invalid reviews error response:',err);}
+    throw new Error(result && result.error || 'Request failed ('+response.status+')');
+  }
+  return response.json();
+}
+
+function setReviewsBadge(count){
+  const badge=document.querySelector('.sb-item[data-page="reviews"] .sb-badge');
+  if(!badge)return;
+  badge.textContent=count||'';
+  badge.style.display=count?'':'none';
+}
+
+async function loadReviews(){
+  const seq=++_reviewsLoadSeq;
+  _reviewsState='loading';
+  _reviewsError='';
+  renderReviews();
+  try{
+    const data=await reviewsApiCall('GET','');
+    if(seq!==_reviewsLoadSeq)return;
+    if(!Array.isArray(data))throw new Error('Unexpected response from server');
+    _reviews=data;
+    _reviewsState='loaded';
+  }catch(err){
+    if(seq!==_reviewsLoadSeq)return;
+    _reviewsState='error';
+    _reviewsError=err.message || 'Could not load reviews';
+  }
+  renderReviews();
+}
+
 function renderReviews(){
-  var wrap=document.getElementById('reviewsTableWrap');
+  const wrap=document.getElementById('reviewsTableWrap');
   if(!wrap)return;
-  var list=getReviews();
-  // update sidebar badge for pending count
-  var pendingN=list.filter(function(r){return r.status==='pending';}).length;
-  var rvBadge=document.querySelector('.sb-item[data-page="reviews"] .sb-badge');
-  if(rvBadge){rvBadge.textContent=pendingN;rvBadge.style.display=pendingN?'':'none';}
-  if(!list.length){
-    wrap.innerHTML='<div class="empty-state"><div class="es-icon">&#11088;</div><h3>No reviews yet</h3><p>Add testimonials to show on the homepage, or travellers can submit via the site.</p></div>';
+
+  if(_reviewsState==='loading'&&!_reviews.length){
+    wrap.innerHTML='<div class="empty-state"><div class="es-icon">&#11088;</div><h3>Loading reviews...</h3><p>Please wait.</p></div>';
     return;
   }
-  wrap.innerHTML='<style>.rv-table{width:100%;border-collapse:collapse;font-size:0.875rem;}.rv-table th{text-align:left;font-size:0.6875rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-m);padding:0.6rem 1rem;border-bottom:2px solid var(--border);white-space:nowrap;}.rv-table td{padding:0.875rem 1rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text);}.rv-table tr:last-child td{border-bottom:none;}.rv-table tr:hover td{background:#f8f7f4;}.rv-quote{font-size:0.8125rem;color:var(--text-m);max-width:240px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}.rv-stars{color:#f59e0b;letter-spacing:1px;}.rv-status-btn{padding:0.25rem 0.75rem;border-radius:100px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}</style>'+
-  '<table class="rv-table"><thead><tr><th>Name</th><th>Email</th><th>Trip</th><th>Review</th><th>Stars</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody>'+
-  list.map(function(r,i){
-    var st=r.status||'published';
-    var stStyle=RV_STATUS_STYLE[st]||RV_STATUS_STYLE.published;
-    return '<tr>'+
-      '<td style="font-weight:600;white-space:nowrap">'+r.name+'</td>'+
-      '<td style="font-size:0.8125rem;color:var(--text-m)">'+(r.email||'—')+'</td>'+
-      '<td style="white-space:nowrap;color:var(--text-m)">'+(r.trip||'—')+'</td>'+
-      '<td><div class="rv-quote">'+r.quote+'</div></td>'+
-      '<td class="rv-stars">'+'★'.repeat(r.stars||5)+'</td>'+
-      '<td style="font-size:0.8125rem;color:var(--text-m);white-space:nowrap">'+(r.date&&r.date!=='Default'?r.date:'—')+'</td>'+
-      '<td><select class="rv-status-btn" style="'+stStyle+'" onchange="updateReviewStatus('+i+',this.value,this)">'+
-        ['published','pending','rejected'].map(function(s){return '<option value="'+s+'"'+(st===s?' selected':'')+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>';}).join('')+
-      '</select></td>'+
-      '<td style="white-space:nowrap;display:flex;gap:0.5rem;">'+
-        '<button onclick="editReview('+i+')" style="background:none;border:1.5px solid var(--border);border-radius:7px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:inherit;color:var(--text);">Edit</button>'+
-        '<button onclick="deleteReview('+i+')" style="background:none;border:1.5px solid #fca5a5;border-radius:7px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;font-family:inherit;color:#dc2626;">Delete</button>'+
-      '</td>'+
-    '</tr>';
-  }).join('')+'</tbody></table>';
+  if(_reviewsState==='error'){
+    wrap.innerHTML=
+      '<div class="empty-state"><div class="es-icon">&#9888;</div>'+
+      '<h3>Could not load reviews</h3>'+
+      '<p>'+rvEscape(_reviewsError)+'</p>'+
+      '<button onclick="loadReviews()" style="margin-top:1rem;background:none;border:1.5px solid var(--border);border-radius:8px;padding:0.45rem 1rem;cursor:pointer;">Retry</button></div>';
+    return;
+  }
+
+  const list=_reviews;
+  setReviewsBadge(list.filter(r=>r.status==='pending').length);
+  if(!list.length){
+    wrap.innerHTML=
+      '<div class="empty-state"><div class="es-icon">&#11088;</div>'+
+      '<h3>No reviews yet</h3>'+
+      '<p>Travellers can submit reviews through the public website.</p></div>';
+    return;
+  }
+
+  wrap.innerHTML=
+    '<style>'+
+    '.rv-table{width:100%;border-collapse:collapse;font-size:0.875rem;}'+
+    '.rv-table th{text-align:left;font-size:0.6875rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-m);padding:0.6rem 1rem;border-bottom:2px solid var(--border);white-space:nowrap;}'+
+    '.rv-table td{padding:0.875rem 1rem;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text);}'+
+    '.rv-table tr:hover td{background:#f8f7f4;}'+
+    '.rv-quote{font-size:0.8125rem;color:var(--text-m);max-width:240px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}'+
+    '.rv-stars{color:#f59e0b;letter-spacing:1px;}'+
+    '.rv-status-btn{padding:0.25rem 0.75rem;border-radius:100px;font-size:0.75rem;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}'+
+    '</style>'+
+    '<table class="rv-table"><thead><tr>'+
+    '<th>Name</th><th>Email</th><th>Trip</th><th>Review</th><th>Stars</th><th>Date</th><th>Status</th><th>Actions</th>'+
+    '</tr></thead><tbody>'+
+    list.map(function(r){
+      const id=Number(r.id);
+      const status=r.status || 'pending';
+      const busy=_reviewsBusy.has(id);
+      return '<tr>'+
+        '<td style="font-weight:600;white-space:nowrap">'+rvEscape(r.name)+'</td>'+
+        '<td style="font-size:0.8125rem;color:var(--text-m)">'+rvEscape(r.email||'—')+'</td>'+
+        '<td style="white-space:nowrap;color:var(--text-m)">'+rvEscape(r.trip||'—')+'</td>'+
+        '<td><div class="rv-quote">'+rvEscape(r.quote)+'</div></td>'+
+        '<td class="rv-stars">'+('★'.repeat(Math.max(1,Math.min(5,Number(r.stars)||5))))+'</td>'+
+        '<td style="font-size:0.8125rem;color:var(--text-m);white-space:nowrap">'+rvEscape(r.date||'—')+'</td>'+
+        '<td><select class="rv-status-btn" '+(busy?'disabled':'')+
+          ' style="'+(RV_STATUS_STYLE[status]||RV_STATUS_STYLE.pending)+
+          '" onchange="updateReviewStatus('+id+',this.value)">'+
+          ['published','pending','rejected'].map(function(s){
+            return '<option value="'+s+'"'+(status===s?' selected':'')+'>'+
+              s.charAt(0).toUpperCase()+s.slice(1)+'</option>';
+          }).join('')+
+        '</select></td>'+
+        '<td style="white-space:nowrap">'+
+          '<button onclick="editReview('+id+')" '+(busy?'disabled':'')+
+          ' style="background:none;border:1.5px solid var(--border);border-radius:7px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;">Edit</button> '+
+          '<button onclick="deleteReview('+id+')" '+(busy?'disabled':'')+
+          ' style="background:none;border:1.5px solid #fca5a5;border-radius:7px;padding:0.35rem 0.75rem;font-size:0.8rem;cursor:pointer;color:#dc2626;">Delete</button>'+
+        '</td></tr>';
+    }).join('')+
+    '</tbody></table>';
 }
-function updateReviewStatus(idx,status,sel){
-  var list=getReviews();
-  if(!list[idx])return;
-  list[idx].status=status;
-  saveReviews(list);
-  var stStyle=RV_STATUS_STYLE[status]||RV_STATUS_STYLE.published;
-  sel.style.cssText=stStyle;
+
+async function updateReviewStatus(id,status){
+  const review=_reviews.find(r=>Number(r.id)===id);
+  if(!review||_reviewsBusy.has(id)||status===review.status)return;
+  _reviewsBusy.add(id);
   renderReviews();
-  showToast(status==='published'?'Published — now live on homepage':'Status updated','success');
+  try{
+    await reviewsApiCall('PUT','/'+encodeURIComponent(id),{status});
+    showToast(status==='published'?'Review published — now live on homepage':'Review status updated','success');
+    await loadReviews();
+  }catch(err){
+    showToast('Could not update review: '+err.message,'error');
+  }finally{
+    _reviewsBusy.delete(id);
+    renderReviews();
+  }
 }
-function openReviewModal(idx){
-  document.getElementById('rvId').value=idx===undefined?'':idx;
-  if(idx!==undefined){
-    var r=getReviews()[idx];
-    document.getElementById('rvName').value=r.name;
+
+function openReviewModal(id){
+  document.getElementById('rvId').value=id===undefined?'':id;
+  if(id!==undefined){
+    const r=_reviews.find(item=>Number(item.id)===id);
+    if(!r)return;
+    document.getElementById('rvName').value=r.name||'';
     document.getElementById('rvEmail').value=r.email||'';
-    document.getElementById('rvTrip').value=r.trip;
-    document.getElementById('rvQuote').value=r.quote;
+    document.getElementById('rvTrip').value=r.trip||'';
+    document.getElementById('rvQuote').value=r.quote||'';
     document.getElementById('rvStars').value=r.stars||5;
-    document.getElementById('rvStatus').value=r.status||'published';
+    document.getElementById('rvStatus').value=r.status||'pending';
     document.getElementById('reviewModalTitle').textContent='Edit Review';
   }else{
     document.getElementById('rvName').value='';
@@ -2749,37 +2847,59 @@ function openReviewModal(idx){
   }
   document.getElementById('reviewModal').style.display='flex';
 }
-function editReview(i){openReviewModal(i);}
+
+function editReview(id){openReviewModal(id);}
 function closeReviewModal(){document.getElementById('reviewModal').style.display='none';}
-function saveReview(){
-  var name=document.getElementById('rvName').value.trim();
-  var email=document.getElementById('rvEmail').value.trim();
-  var trip=document.getElementById('rvTrip').value.trim();
-  var quote=document.getElementById('rvQuote').value.trim();
-  var stars=parseInt(document.getElementById('rvStars').value)||5;
-  var status=document.getElementById('rvStatus').value||'published';
-  if(!name||!quote){showToast('Name and review are required','error');return;}
-  var list=getReviews();
-  var idx=document.getElementById('rvId').value;
-  var now=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
-  if(idx!==''){
-    var old=list[parseInt(idx)];
-    list[parseInt(idx)]={id:old.id,name:name,email:email,trip:trip,quote:quote,stars:stars,status:status,date:old.date||now};
-  }else{
-    list.push({id:Date.now(),name:name,email:email,trip:trip,quote:quote,stars:stars,status:status,date:now});
+
+async function saveReview(){
+  const name=document.getElementById('rvName').value.trim();
+  const email=document.getElementById('rvEmail').value.trim();
+  const trip=document.getElementById('rvTrip').value.trim();
+  const quote=document.getElementById('rvQuote').value.trim();
+  const stars=parseInt(document.getElementById('rvStars').value,10)||5;
+  const status=document.getElementById('rvStatus').value||'published';
+  const id=document.getElementById('rvId').value;
+  if(!name||!quote){
+    showToast('Name and review are required','error');
+    return;
   }
-  saveReviews(list);
-  closeReviewModal();
-  renderReviews();
-  showToast(status==='published'?'Review published — homepage updated ✓':'Review saved','success');
+  const button=document.querySelector('#reviewModal .btn-primary');
+  if(button && button.disabled)return;
+  if(button)button.disabled=true;
+  try{
+    const payload={name,email,trip,quote,stars,status};
+    if(id!==''){
+      await reviewsApiCall('PUT','/'+encodeURIComponent(id),payload);
+      showToast('Review updated','success');
+    }else{
+      await reviewsApiCall('POST','/admin',payload);
+      showToast('Review added','success');
+    }
+    closeReviewModal();
+    await loadReviews();
+  }catch(err){
+    showToast('Could not save review: '+err.message,'error');
+  }finally{
+    if(button)button.disabled=false;
+  }
 }
-function deleteReview(i){
-  if(!confirm('Delete this review?'))return;
-  var list=getReviews();
-  list.splice(i,1);
-  saveReviews(list);
+
+async function deleteReview(id){
+  const review=_reviews.find(r=>Number(r.id)===id);
+  if(!review||_reviewsBusy.has(id))return;
+  if(!confirm('Delete this review? This cannot be undone.'))return;
+  _reviewsBusy.add(id);
   renderReviews();
-  showToast('Review deleted','error');
+  try{
+    await reviewsApiCall('DELETE','/'+encodeURIComponent(id));
+    showToast('Review deleted','success');
+    await loadReviews();
+  }catch(err){
+    showToast('Could not delete review: '+err.message,'error');
+  }finally{
+    _reviewsBusy.delete(id);
+    renderReviews();
+  }
 }
 /* -- BOOKINGS BADGE -- */
 function updateBookingsBadge(){
