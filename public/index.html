@@ -2115,15 +2115,13 @@ async function submitBooking(e){
 
 <script>
 (function(){
-  var DEFAULTS=[
-    {id:1,name:"Priya S.",trip:"Meghalaya trip",quote:"The Meghalaya trip was life-changing — the root bridges, the people, the food. Viaara made every detail seamless. Didn’t have to think about a thing.",stars:5},
-    {id:2,name:"Rahul M.",trip:"Goa – Gokarna trip",quote:"First group trip I ever did and I was honestly nervous. The Viaara team made it so easy — Goa to Gokarna was just incredible. Can’t wait for the next one.",stars:5},
-    {id:3,name:"Ananya K.",trip:"Udaipur trip",quote:"Udaipur in 3 days felt surprisingly complete. Great curation, zero stress, and the rooftop dinner on Day 2 was something else. Already booked my next trip with Viaara.",stars:5},
-    {id:4,name:"Siddharth V.",trip:"Meghalaya trip",quote:"Never travelled in a group before — Viaara changed that. Everything was sorted, the vibe was great, and Meghalaya blew my mind. 10/10 would do it again.",stars:5},
-    {id:5,name:"Nisha T.",trip:"Goa – Gokarna trip",quote:"The sunset yacht cruise in Goa was worth the trip alone. Viaara handled everything — we just showed up and enjoyed. Already planning the next one.",stars:5}
-  ];
   var AVATAR_COLORS=["#1f7a4a","#2563eb","#9333ea","#d97706","#dc2626","#0891b2"];
-  function avatarColor(name){var i=name.charCodeAt(0)%AVATAR_COLORS.length;return AVATAR_COLORS[i];}
+
+  function avatarColor(name){
+    var i=name.charCodeAt(0)%AVATAR_COLORS.length;
+    return AVATAR_COLORS[i];
+  }
+
   function escapeReviewHtml(value){
     return String(value == null ? '' : value).replace(/[&<>"']/g,function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
@@ -2133,8 +2131,10 @@ async function submitBooking(e){
   function renderTestimonials(reviews){
     var track=document.getElementById('testimonialsTrack');
     if(!track)return;
-    var list=DEFAULTS.concat(reviews || []);
+
+    var list=Array.isArray(reviews) ? reviews : [];
     var all=list.concat(list);
+
     track.innerHTML=all.map(function(t){
       var rawName=t.name || 'Viaara traveller';
       var name=escapeReviewHtml(rawName);
@@ -2142,6 +2142,7 @@ async function submitBooking(e){
       var quote=escapeReviewHtml(t.quote || '');
       var init=escapeReviewHtml(rawName.charAt(0).toUpperCase());
       var stars='★'.repeat(Math.max(1,Math.min(5,Number(t.stars)||5)));
+
       return '<div class="t-card">'+
         '<div style="display:flex;align-items:center;gap:1rem;">'+
           '<div class="t-avatar" style="background:'+avatarColor(rawName)+'">'+init+'</div>'+
@@ -2151,6 +2152,7 @@ async function submitBooking(e){
         '<p class="t-quote">&ldquo;'+quote+'&rdquo;</p>'+
       '</div>';
     }).join('');
+
     track.style.animation='none';
     track.offsetHeight;
     track.style.animation='';

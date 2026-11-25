@@ -54,12 +54,17 @@ test('destination separators are saved cleanly and old mojibake is normalized', 
   }
 });
 
-test('homepage testimonials include escaped approved reviews and fall back to defaults', async () => {
+test('homepage testimonials use only API reviews and never fall back to defaults', async () => {
   const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8');
-  const defaults = html.indexOf('var DEFAULTS=[');
-  const start = defaults < 0 ? -1 : html.lastIndexOf('(function(){', defaults);
+
+  assert.doesNotMatch(html, /var DEFAULTS\s*=/);
+  assert.doesNotMatch(html, /Priya S\.|Rahul M\.|Ananya K\.|Siddharth V\.|Nisha T\./);
+
+  const fetchIndex = html.indexOf("fetch('/api/reviews/public'");
+  const start = html.lastIndexOf('(function(){', fetchIndex);
   const end = html.indexOf('</script>', start);
-  assert.ok(start >= 0 && end > start);
+  assert.ok(fetchIndex >= 0 && start >= 0 && end > start);
+
   const script = html.slice(start, end);
 
   async function render(fetch) {
@@ -77,16 +82,28 @@ test('homepage testimonials include escaped approved reviews and fall back to de
 
   const success = await render(async () => ({
     ok: true,
-    json: async () => [{ name: '<img>', trip: 'A & B', quote: '<script>bad</script>', stars: 4 }]
+    json: async () => [{
+      name: '<img>',
+      trip: 'A & B',
+      quote: '<script>bad</script>',
+      stars: 4
+    }]
   }));
-  assert.equal((success.track.innerHTML.match(/class="t-card"/g) || []).length, 12);
+
+  assert.equal((success.track.innerHTML.match(/class="t-card"/g) || []).length, 2);
   assert.match(success.track.innerHTML, /&lt;img&gt;/);
   assert.match(success.track.innerHTML, /A &amp; B/);
   assert.match(success.track.innerHTML, /&lt;script&gt;bad&lt;\/script&gt;/);
   assert.doesNotMatch(success.track.innerHTML, /<script>bad<\/script>/);
 
-  const failure = await render(async () => { throw new Error('offline'); });
-  assert.equal((failure.track.innerHTML.match(/class="t-card"/g) || []).length, 10);
+  const empty = await render(async () => ({ ok: true, json: async () => [] }));
+  assert.equal(empty.track.innerHTML, '');
+
+  const failure = await render(async () => {
+    throw new Error('offline');
+  });
+
+  assert.equal((failure.track.innerHTML.match(/class="t-card"/g) || []).length, 0);
   assert.equal(failure.warnings.length, 1);
 });
 

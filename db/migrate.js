@@ -134,6 +134,77 @@ async function migrate() {
     });
   }
 
+  // Import the original homepage testimonials exactly once.
+  // The marker and review inserts share one transaction so a partial
+  // import can never be recorded as complete.
+  const initialReviewsMigration = '20261125_seed_initial_homepage_reviews_v1';
+
+  if (!(await db.schema.hasTable('app_migrations'))) {
+    await db.schema.createTable('app_migrations', t => {
+      t.string('id').primary();
+      t.timestamp('applied_at').notNullable().defaultTo(db.fn.now());
+    });
+  }
+
+  await db.transaction(async trx => {
+    const alreadyApplied = await trx('app_migrations')
+      .where({ id: initialReviewsMigration })
+      .first();
+
+    if (alreadyApplied) return;
+
+    const initialReviews = [
+      {
+        name: 'Priya S.',
+        trip: 'Meghalaya trip',
+        body: 'The Meghalaya trip was life-changing \u2014 the root bridges, the people, the food. Viaara made every detail seamless. Didn\u2019t have to think about a thing.',
+        rating: 5,
+        status: 'approved',
+        email: ''
+      },
+      {
+        name: 'Rahul M.',
+        trip: 'Goa \u2013 Gokarna trip',
+        body: 'First group trip I ever did and I was honestly nervous. The Viaara team made it so easy \u2014 Goa to Gokarna was just incredible. Can\u2019t wait for the next one.',
+        rating: 5,
+        status: 'approved',
+        email: ''
+      },
+      {
+        name: 'Ananya K.',
+        trip: 'Udaipur trip',
+        body: 'Udaipur in 3 days felt surprisingly complete. Great curation, zero stress, and the rooftop dinner on Day 2 was something else. Already booked my next trip with Viaara.',
+        rating: 5,
+        status: 'approved',
+        email: ''
+      },
+      {
+        name: 'Siddharth V.',
+        trip: 'Meghalaya trip',
+        body: 'Never travelled in a group before \u2014 Viaara changed that. Everything was sorted, the vibe was great, and Meghalaya blew my mind. 10/10 would do it again.',
+        rating: 5,
+        status: 'approved',
+        email: ''
+      },
+      {
+        name: 'Nisha T.',
+        trip: 'Goa \u2013 Gokarna trip',
+        body: 'The sunset yacht cruise in Goa was worth the trip alone. Viaara handled everything \u2014 we just showed up and enjoyed. Already planning the next one.',
+        rating: 5,
+        status: 'approved',
+        email: ''
+      }
+    ];
+
+    await trx('testimonials').insert(initialReviews);
+
+    await trx('app_migrations').insert({
+      id: initialReviewsMigration
+    });
+
+    console.log('Imported five original homepage testimonials.');
+  });
+
   console.log('✓ Migrations complete.');
 }
 
