@@ -134,6 +134,19 @@ html,body{height:100%;font-family:"DM Sans",sans-serif;font-size:14px;color:var(
 .ov-top-channel{margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:0.8125rem;color:var(--text-m);}
 .ov-top-channel strong{color:var(--text);}
 
+/* Website-level social tracking links */
+.ov-social-links{margin-top:1.25rem;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;}
+.ov-social-head{margin-bottom:1rem;}
+.ov-social-title{font-size:0.9375rem;font-weight:700;margin-bottom:0.25rem;}
+.ov-social-sub{font-size:0.8125rem;color:var(--text-m);}
+.ov-social-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0.625rem;}
+.ov-social-item{display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.75rem;border:1px solid var(--border);border-radius:9px;min-width:0;}
+.ov-social-name{font-size:0.85rem;font-weight:600;}
+.ov-social-url{font-size:0.7rem;color:var(--text-s);overflow-wrap:anywhere;margin-top:0.2rem;}
+.ov-social-copy{flex-shrink:0;background:#fff;border:1px solid var(--border);border-radius:7px;padding:0.4rem 0.7rem;font-family:"DM Sans",sans-serif;font-size:0.75rem;font-weight:600;cursor:pointer;color:var(--text);}
+.ov-social-copy:hover{border-color:var(--green);color:var(--green);}
+.ov-social-note{font-size:0.75rem;color:var(--text-s);margin-top:0.875rem;}
+@media(max-width:700px){.ov-social-grid{grid-template-columns:1fr;}}
 /* TRIPS PAGE */
 .analytics-strip{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:0.75rem;margin-bottom:1.25rem;align-items:stretch;}
 .analytic-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:0.875rem 1rem;display:flex;align-items:center;gap:0.75rem;}
@@ -587,6 +600,12 @@ td:first-child{padding-left:1.125rem;}
         <div class="sb-item" data-page="payments" onclick="showPage('payments')"><div class="sb-item-left"><span class="sb-icon">&#8377;</span> Payments</div></div>
         <div class="sb-item" data-page="accounts" onclick="showPage('accounts')"><div class="sb-item-left"><span class="sb-icon">&#128450;</span> Accounts</div></div>
         <div class="sb-item" data-page="reviews" onclick="showPage('reviews')"><div class="sb-item-left"><span class="sb-icon">&#11088;</span> Reviews</div><span class="sb-badge" style="display:none"></span></div>
+        <div class="sb-section">WEBSITE</div>
+        <div class="sb-item" data-page="homepage-media" onclick="showPage('homepage-media')">
+          <div class="sb-item-left">
+            <span class="sb-icon">&#127909;</span> Homepage Media
+          </div>
+        </div>
       </nav>
       <div class="sb-footer">
         <div class="sb-logout" onclick="doLogout()">
@@ -720,6 +739,35 @@ td:first-child{padding-left:1.125rem;}
               </div>
             </div>
           </div>
+          <section class="ov-social-links" aria-labelledby="ovSocialTitle">
+            <div class="ov-social-head">
+              <div class="ov-social-title" id="ovSocialTitle">Social Media Tracking Links</div>
+              <div class="ov-social-sub">Copy these permanent website links into your social media profiles to measure traffic by platform.</div>
+            </div>
+            <div class="ov-social-grid">
+              <div class="ov-social-item">
+                <div><div class="ov-social-name">Instagram</div><div class="ov-social-url">viaaratravels.com · Instagram</div></div>
+                <button class="ov-social-copy" type="button" onclick="copySocialTrackingLink('instagram','social')">Copy link</button>
+              </div>
+              <div class="ov-social-item">
+                <div><div class="ov-social-name">Facebook</div><div class="ov-social-url">viaaratravels.com · Facebook</div></div>
+                <button class="ov-social-copy" type="button" onclick="copySocialTrackingLink('facebook','social')">Copy link</button>
+              </div>
+              <div class="ov-social-item">
+                <div><div class="ov-social-name">LinkedIn</div><div class="ov-social-url">viaaratravels.com · LinkedIn</div></div>
+                <button class="ov-social-copy" type="button" onclick="copySocialTrackingLink('linkedin','social')">Copy link</button>
+              </div>
+              <div class="ov-social-item">
+                <div><div class="ov-social-name">YouTube</div><div class="ov-social-url">viaaratravels.com · YouTube</div></div>
+                <button class="ov-social-copy" type="button" onclick="copySocialTrackingLink('youtube','video')">Copy link</button>
+              </div>
+              <div class="ov-social-item">
+                <div><div class="ov-social-name">WhatsApp</div><div class="ov-social-url">viaaratravels.com · WhatsApp</div></div>
+                <button class="ov-social-copy" type="button" onclick="copySocialTrackingLink('whatsapp','messaging')">Copy link</button>
+              </div>
+            </div>
+            <div class="ov-social-note">Add each link to the corresponding social media profile. These links track website visits, not social post impressions.</div>
+          </section>
         </div>
 
         <!-- ═══ TRIPS ═══ -->
@@ -814,6 +862,41 @@ td:first-child{padding-left:1.125rem;}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="page" id="page-homepage-media">
+          <div class="page-header">
+            <div>
+              <h1>Homepage Media</h1>
+              <p>Manage the homepage hero video and poster images</p>
+            </div>
+          </div>
+
+          <div style="padding:0 2rem 1.5rem;">
+            <div style="background:var(--surface,#fff);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;">
+              <div style="font-weight:700;margin-bottom:0.4rem;">Publishing</div>
+              <p style="font-size:0.85rem;color:var(--text-m);margin:0 0 1rem;">
+                Choose one video and one poster. Both will become active together.
+                Uploading or previewing assets does not change the live homepage.
+              </p>
+
+              <div id="hmPublishSelection" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;"></div>
+
+              <button class="btn-primary" id="hmPublishBtn" onclick="publishHomepageMedia()">
+                Publish Video + Poster
+              </button>
+              <span id="hmPublishStatus" style="font-size:0.82rem;margin-left:0.75rem;"></span>
+            </div>
+
+            <div id="hmMediaStatus" style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-m);">
+              Loading homepage media...
+            </div>
+
+            <h2 style="font-size:1rem;margin:1.5rem 0 0.8rem;">Hero videos</h2>
+            <div id="hmVideoSlots" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;"></div>
+
+            <h2 style="font-size:1rem;margin:1.8rem 0 0.8rem;">Poster images</h2>
+            <div id="hmPosterSlots" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;"></div>
           </div>
         </div>
         <div class="page" id="page-minisite"><div class="page-header"><h1>Mini-Site</h1><p>Your public-facing trip page</p></div><div class="empty-state"><div class="es-icon">&#127760;</div><h3>Mini-site settings</h3><p>Customise your public trip listing page here.</p></div></div>
@@ -1117,7 +1200,7 @@ async function doLogout(){
 })();
 
 /* ── NAV ── */
-const PAGE_TITLES={overview:'Overview',trips:'Trips Inventory',offers:'Offers',leads:'Leads',enquiries:'Enquiries',reviews:'Reviews',minisite:'Mini-Site',itineraries:'Itineraries',departures:'Departures',bookings:'Bookings',customers:'Customers',followups:'Follow-ups',payments:'Payments',accounts:'Accounts'};
+const PAGE_TITLES={overview:'Overview',trips:'Trips Inventory',offers:'Offers',leads:'Leads',enquiries:'Enquiries',reviews:'Reviews','homepage-media':'Homepage Media',minisite:'Mini-Site',itineraries:'Itineraries',departures:'Departures',bookings:'Bookings',customers:'Customers',followups:'Follow-ups',payments:'Payments',accounts:'Accounts'};
 let etPendingNav=null;
 let etOriginalStatus=null;
 
@@ -1138,6 +1221,7 @@ function showPage(page,force){
   else if(page==='departures')renderDepartures();
   else if(page==='leads')loadLeads();
   else if(page==='reviews')loadReviews();
+  else if(page==='homepage-media')loadHomepageMedia();
   else if(page==='bookings')loadBookings();
   updateLeadsBadge();
   updateBookingsBadge();
@@ -1992,6 +2076,42 @@ function toggleSpecial(id){
 }
 
 /* ── TOAST ── */
+function copySocialTrackingLink(source, medium){
+  const allowed = ['instagram', 'facebook', 'linkedin', 'youtube', 'whatsapp'];
+
+  if (!allowed.includes(source)) {
+    showToast('Invalid tracking platform', 'error');
+    return;
+  }
+
+  const value = 'https://viaaratravels.com/go/' + source;
+
+  const fallback = () => {
+    const input = document.createElement('textarea');
+    input.value = value;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.select();
+
+    try {
+      const copied = document.execCommand('copy');
+      showToast(copied ? 'Short tracking link copied ✓' : 'Unable to copy link', copied ? 'success' : 'error');
+    } catch(e) {
+      showToast('Unable to copy link', 'error');
+    }
+
+    input.remove();
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(value)
+      .then(() => showToast('Short tracking link copied ✓', 'success'))
+      .catch(fallback);
+  } else {
+    fallback();
+  }
+}
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type||'');setTimeout(()=>t.classList.add('show'),10);setTimeout(()=>t.classList.remove('show'),3000);}
 
 /* ── EDIT TRIP ── */
@@ -3534,6 +3654,332 @@ function tpSlide(dir){
   tpCarouselIdx=Math.max(0,Math.min(tpCarouselImgs.length-1,tpCarouselIdx+dir));
   document.getElementById('tpCarouselTrack').style.transform='translateX(-'+tpCarouselIdx*100+'%)';
   document.getElementById('tpCounter').textContent=(tpCarouselIdx+1)+' / '+tpCarouselImgs.length;
+}
+
+/* ── HOMEPAGE MEDIA MANAGER ── */
+
+let hmAssets = [];
+let hmActive = { videoId: null, posterId: null };
+let hmSelectedVideo = null;
+let hmSelectedPoster = null;
+let hmBusy = false;
+let hmLoadSeq = 0;
+
+function hmEscape(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, function(c) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[c];
+  });
+}
+
+function hmSetStatus(message, error) {
+  const el = document.getElementById('hmMediaStatus');
+  if (!el) return;
+  el.textContent = message;
+  el.style.color = error ? '#dc2626' : 'var(--text-m)';
+}
+
+async function hmRequest(url, options) {
+  const response = await fetch('/api/homepage-media' + url, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    ...(options || {})
+  });
+
+  if (response.status === 401) {
+    hmAssets = [];
+    hmActive = { videoId: null, posterId: null };
+    hmSelectedVideo = null;
+    hmSelectedPoster = null;
+    showLogin();
+    throw new Error('Session expired — please log in again');
+  }
+
+  if (!response.ok) {
+    let result;
+    try {
+      result = await response.json();
+    } catch (err) {
+      console.warn('[Viaara] Invalid homepage media error response:', err);
+    }
+    throw new Error(result && result.error || 'Request failed (' + response.status + ')');
+  }
+
+  return response.json();
+}
+
+function hmFindAsset(id) {
+  return hmAssets.find(function(asset) {
+    return asset.id === id;
+  }) || null;
+}
+
+async function loadHomepageMedia() {
+  const seq = ++hmLoadSeq;
+  hmSetStatus('Loading homepage media...');
+
+  try {
+    const data = await hmRequest('');
+    if (seq !== hmLoadSeq) return false;
+    if (!data || !Array.isArray(data.assets) || !data.active || typeof data.active !== 'object') {
+      throw new Error('Unexpected response from server');
+    }
+
+    hmAssets = data.assets;
+    hmActive = data.active;
+
+    if (!hmFindAsset(hmSelectedVideo)) {
+      hmSelectedVideo = hmActive.videoId ||
+        ((hmAssets.find(a => a.type === 'hero') || {}).id || null);
+    }
+
+    if (!hmFindAsset(hmSelectedPoster)) {
+      hmSelectedPoster = hmActive.posterId ||
+        ((hmAssets.find(a => a.type === 'posters') || {}).id || null);
+    }
+
+    renderHomepageMedia();
+    hmSetStatus('Media loaded. Uploads remain unpublished until you publish the pair.');
+    return true;
+  } catch (err) {
+    if (seq === hmLoadSeq) hmSetStatus(err.message || 'Could not load homepage media.', true);
+    return false;
+  }
+}
+
+function hmRenderSlot(type, slot) {
+  const storageType = type === 'video' ? 'hero' : 'posters';
+
+  const asset = hmAssets.find(function(a) {
+    return a.type === storageType && Number(a.slot) === slot;
+  });
+
+  const selected = asset && (
+    type === 'video'
+      ? hmSelectedVideo === asset.id
+      : hmSelectedPoster === asset.id
+  );
+
+  const active = asset && (
+    type === 'video'
+      ? hmActive.videoId === asset.id
+      : hmActive.posterId === asset.id
+  );
+
+  const title = type === 'video' ? 'Hero video' : 'Poster image';
+
+  let preview = '';
+
+  if (asset) {
+    preview = type === 'video'
+      ? '<video controls preload="metadata" playsinline style="width:100%;max-height:190px;background:#111;border-radius:8px;margin:0.8rem 0;" src="' + hmEscape(asset.url) + '"></video>'
+      : '<img src="' + hmEscape(asset.url) + '" alt="Homepage poster preview" style="width:100%;max-height:190px;object-fit:contain;background:#f3f3f3;border-radius:8px;margin:0.8rem 0;">';
+  }
+
+  let actions = '';
+
+  if (asset) {
+    actions =
+      '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem;">' +
+        '<button type="button" data-hm-id="' + hmEscape(asset.id) + '" onclick="hmSelectAsset(\'' + type + '\',this.dataset.hmId)" ' +
+          (hmBusy ? 'disabled ' : '') +
+          'style="border:1px solid var(--border);border-radius:7px;padding:0.45rem 0.8rem;cursor:pointer;background:' + (selected ? '#e8f3ec' : '#fff') + ';">' +
+          (selected ? '✓ Selected' : 'Select for publishing') +
+        '</button>' +
+        (active
+          ? '<span style="font-size:0.78rem;color:#16834a;font-weight:700;padding:0.45rem 0;">Currently published</span>'
+          : '<button type="button" onclick="deleteHomepageAsset(\'' + type + '\',' + slot + ')" ' +
+              (hmBusy ? 'disabled ' : '') +
+              'style="border:1px solid #fca5a5;color:#dc2626;border-radius:7px;padding:0.45rem 0.8rem;cursor:pointer;background:#fff;">Delete</button>') +
+      '</div>';
+  } else {
+    actions =
+      '<div style="margin-top:0.75rem;">' +
+        '<label style="display:inline-block;border:1px solid var(--border);border-radius:7px;padding:0.55rem 0.8rem;cursor:pointer;font-size:0.85rem;">' +
+          '＋ Upload ' + title +
+          '<input type="file" accept="' + (type === 'video' ? 'video/mp4,.mp4' : 'image/jpeg,image/png,image/webp') + '" ' +
+            (hmBusy ? 'disabled ' : '') +
+            'style="display:none" onchange="uploadHomepageAsset(\'' + type + '\',' + slot + ',this.files[0]);this.value=\'\';">' +
+        '</label>' +
+        '<p style="font-size:0.76rem;color:var(--text-m);margin-top:0.5rem;">' +
+          (type === 'video' ? 'MP4 only · Maximum 150 MB · Original quality retained' : 'JPEG, PNG or WebP · Converted to optimized WebP · Maximum 8 MB') +
+        '</p>' +
+      '</div>';
+  }
+
+  return '<div style="background:var(--surface,#fff);border:1px solid var(--border);border-radius:12px;padding:1rem;min-width:0;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:0.5rem;">' +
+      '<strong>' + title + ' — Slot ' + slot + '</strong>' +
+      (active
+        ? '<span style="background:#e8f5ec;color:#16834a;border-radius:20px;padding:0.25rem 0.6rem;font-size:0.72rem;font-weight:700;">LIVE</span>'
+        : asset
+          ? '<span style="background:#f1f1f1;color:#555;border-radius:20px;padding:0.25rem 0.6rem;font-size:0.72rem;">Stored</span>'
+          : '<span style="background:#f1f1f1;color:#777;border-radius:20px;padding:0.25rem 0.6rem;font-size:0.72rem;">Empty</span>') +
+    '</div>' +
+    (preview || '<div style="height:130px;display:grid;place-items:center;background:#f7f7f7;border-radius:8px;margin-top:0.8rem;color:#888;font-size:0.85rem;">No asset uploaded</div>') +
+    (asset
+      ? '<div style="font-size:0.76rem;color:var(--text-m);overflow-wrap:anywhere;">' +
+          hmEscape(asset.filename) + '<br>' +
+          (Number(asset.file_size) / 1024 / 1024).toFixed(2) + ' MB' +
+        '</div>'
+      : '') +
+    actions +
+  '</div>';
+}
+
+function renderHomepageMedia() {
+  const videos = document.getElementById('hmVideoSlots');
+  const posters = document.getElementById('hmPosterSlots');
+
+  if (!videos || !posters) return;
+
+  videos.innerHTML = hmRenderSlot('video', 1) + hmRenderSlot('video', 2);
+  posters.innerHTML = hmRenderSlot('poster', 1) + hmRenderSlot('poster', 2);
+
+  const selectedVideo = hmFindAsset(hmSelectedVideo);
+  const selectedPoster = hmFindAsset(hmSelectedPoster);
+
+  document.getElementById('hmPublishSelection').innerHTML =
+    '<div style="font-size:0.85rem;">Video: <strong>' +
+    hmEscape(selectedVideo ? selectedVideo.filename : 'Not selected') +
+    '</strong></div>' +
+    '<div style="font-size:0.85rem;">Poster: <strong>' +
+    hmEscape(selectedPoster ? selectedPoster.filename : 'Not selected') +
+    '</strong></div>';
+
+  const publishButton = document.getElementById('hmPublishBtn');
+  publishButton.disabled = hmBusy || !selectedVideo || !selectedPoster;
+  publishButton.style.opacity = publishButton.disabled ? '0.5' : '1';
+  publishButton.style.cursor = publishButton.disabled ? 'not-allowed' : 'pointer';
+}
+
+function hmSelectAsset(type, id) {
+  if (hmBusy) return;
+  if (type === 'video') {
+    hmSelectedVideo = id;
+  } else {
+    hmSelectedPoster = id;
+  }
+  renderHomepageMedia();
+}
+
+async function uploadHomepageAsset(type, slot, file) {
+  if (!file || hmBusy) return;
+
+  const isVideo = type === 'video';
+
+  if (isVideo && file.type !== 'video/mp4' && !file.name.toLowerCase().endsWith('.mp4')) {
+    hmSetStatus('Please select an MP4 video.', true);
+    return;
+  }
+
+  if (!isVideo && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    hmSetStatus('Please select a JPEG, PNG or WebP poster.', true);
+    return;
+  }
+
+  hmBusy = true;
+  ++hmLoadSeq;
+  renderHomepageMedia();
+  hmSetStatus('Uploading and processing ' + file.name + '...');
+
+  try {
+    const form = new FormData();
+    form.append(isVideo ? 'video' : 'poster', file);
+
+    const result = await hmRequest(
+      '/' + (isVideo ? 'video' : 'poster') + '?slot=' + slot,
+      { method: 'POST', body: form }
+    );
+
+    if (isVideo) {
+      hmSelectedVideo = result.asset.id;
+    } else {
+      hmSelectedPoster = result.asset.id;
+    }
+
+    if (await loadHomepageMedia()) {
+      hmSetStatus('Upload complete. Preview the asset, then publish the pair when ready.');
+    }
+  } catch (err) {
+    hmSetStatus(err.message || 'Upload failed.', true);
+  } finally {
+    hmBusy = false;
+    renderHomepageMedia();
+  }
+}
+
+async function publishHomepageMedia() {
+  if (hmBusy || !hmSelectedVideo || !hmSelectedPoster) return;
+
+  if (!confirm('Publish this video and poster together on the live homepage?')) {
+    return;
+  }
+
+  hmBusy = true;
+  ++hmLoadSeq;
+  renderHomepageMedia();
+
+  const status = document.getElementById('hmPublishStatus');
+  status.textContent = 'Publishing...';
+
+  try {
+    await hmRequest('/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        videoId: hmSelectedVideo,
+        posterId: hmSelectedPoster
+      })
+    });
+
+    hmActive.videoId = hmSelectedVideo;
+    hmActive.posterId = hmSelectedPoster;
+
+    status.textContent = 'Published successfully.';
+    await loadHomepageMedia();
+  } catch (err) {
+    status.textContent = err.message || 'Publishing failed.';
+  } finally {
+    hmBusy = false;
+    renderHomepageMedia();
+  }
+}
+
+async function deleteHomepageAsset(type, slot) {
+  if (hmBusy) return;
+
+  if (!confirm('Delete this unused homepage asset? This cannot be undone.')) {
+    return;
+  }
+
+  hmBusy = true;
+  ++hmLoadSeq;
+  renderHomepageMedia();
+  hmSetStatus('Deleting asset...');
+
+  try {
+    await hmRequest('/' + type + '/' + slot, {
+      method: 'DELETE'
+    });
+
+    if (type === 'video') hmSelectedVideo = null;
+    else hmSelectedPoster = null;
+
+    if (await loadHomepageMedia()) {
+      hmSetStatus('Unused asset deleted.');
+    }
+  } catch (err) {
+    hmSetStatus(err.message || 'Could not delete asset.', true);
+  } finally {
+    hmBusy = false;
+    renderHomepageMedia();
+  }
 }
 </script>
 

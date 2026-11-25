@@ -90,6 +90,35 @@ test('local storage upload and deletion security', async t => {
     );
   });
 
+  await t.test('homepage media stays in its own folders', async () => {
+    const buffer = Buffer.from('homepage media');
+    for (const type of ['hero', 'posters']) {
+      const url = await storage.uploadHomepageFile(buffer, 'media-1.webp', 'image/webp', type);
+      assert.equal(url, `/uploads/homepage/${type}/media-1.webp`);
+      assert.deepEqual(fs.readFileSync(path.join(uploadDir, 'homepage', type, 'media-1.webp')), buffer);
+      await storage.deleteHomepageFile(url, type);
+      assert.equal(fs.existsSync(path.join(uploadDir, 'homepage', type, 'media-1.webp')), false);
+    }
+  });
+
+  await t.test('homepage media rejects invalid inputs and unrelated paths', async () => {
+    await assert.rejects(storage.uploadHomepageFile(Buffer.from('x'), 'ok.jpg', 'image/jpeg', 'trips'), /Invalid homepage media type/);
+    for (const filename of ['../important.txt', '.hidden', 'nested/file.jpg']) {
+      await assert.rejects(storage.uploadHomepageFile(Buffer.from('x'), filename, 'image/jpeg', 'hero'), /Invalid homepage media filename/);
+    }
+    await assert.rejects(storage.uploadHomepageFile(Buffer.alloc(0), 'ok.jpg', 'image/jpeg', 'hero'), /Invalid homepage media buffer/);
+    for (const url of [
+      '/uploads/homepage/posters/image.jpg',
+      '/uploads/homepage/hero/%2e%2e%2fimportant.txt',
+      '/uploads/homepage/hero/nested/image.jpg',
+      '/uploads/homepage/hero/image.jpg?x=1',
+      'https://example.com/uploads/homepage/hero/image.jpg'
+    ]) {
+      await assert.rejects(storage.deleteHomepageFile(url, 'hero'), /Invalid local homepage media/);
+    }
+    assert.equal(fs.readFileSync(outsideFile, 'utf8'), 'must remain untouched');
+  });
+
   fs.rmSync(tempDir, { recursive: true, force: true });
 });
 
@@ -116,5 +145,46 @@ test('S3 storage rejects URLs outside the configured CloudFront domain', async (
       storage.deleteFile(url),
       /Invalid Viaara|Invalid CloudFront/
     );
+  }
+});
+
+test('S3 homepage media uses its own keys and validates deletion URLs', async () => {
+  const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+  const originalSend = S3Client.prototype.send;
+  const commands = [];
+  S3Client.prototype.send = async function(command) { commands.push(command); };
+
+  try {
+    process.env.STORAGE = 's3';
+    process.env.S3_BUCKET = 'viaara-test-bucket';
+    process.env.CLOUDFRONT_URL = 'https://cdn.example.com';
+    const storagePath = require.resolve('../lib/storage');
+    delete require.cache[storagePath];
+    const storage = require('../lib/storage');
+    const buffer = Buffer.from('homepage media');
+
+    const url = await storage.uploadHomepageFile(buffer, 'hero.mp4', 'video/mp4', 'hero');
+    assert.equal(url, 'https://cdn.example.com/homepage/hero/hero.mp4');
+    assert.ok(commands[0] instanceof PutObjectCommand);
+    assert.equal(commands[0].input.Key, 'homepage/hero/hero.mp4');
+    assert.equal(commands[0].input.ContentType, 'video/mp4');
+    assert.equal(commands[0].input.CacheControl, 'public, max-age=31536000, immutable');
+    assert.equal(commands[0].input.ACL, undefined);
+
+    for (const invalid of [
+      'https://evil.example.com/homepage/hero/hero.mp4',
+      'http://cdn.example.com/homepage/hero/hero.mp4',
+      'https://cdn.example.com/homepage/posters/hero.mp4',
+      'https://cdn.example.com/homepage/hero/%2e%2e%2fhero.mp4',
+      'https://cdn.example.com/homepage/hero/hero.mp4?x=1'
+    ]) {
+      await assert.rejects(storage.deleteHomepageFile(invalid, 'hero'), /Invalid homepage/);
+    }
+    assert.equal(commands.length, 1);
+    await storage.deleteHomepageFile(url, 'hero');
+    assert.ok(commands[1] instanceof DeleteObjectCommand);
+    assert.equal(commands[1].input.Key, 'homepage/hero/hero.mp4');
+  } finally {
+    S3Client.prototype.send = originalSend;
   }
 });

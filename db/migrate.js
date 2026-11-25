@@ -205,6 +205,49 @@ async function migrate() {
     console.log('Imported five original homepage testimonials.');
   });
 
+  // Homepage media assets: two video slots and two poster slots.
+  if (!(await db.schema.hasTable('homepage_media_assets'))) {
+    await db.schema.createTable('homepage_media_assets', t => {
+      t.string('id').primary();
+      t.string('type').notNullable(); // hero | posters
+      t.integer('slot').notNullable(); // 1 | 2
+      t.string('filename').notNullable();
+      t.text('url').notNullable();
+      t.string('mime_type').notNullable();
+      t.bigInteger('file_size').notNullable();
+      t.timestamp('created_at').notNullable().defaultTo(db.fn.now());
+
+      t.unique(['type', 'slot']);
+    });
+
+    console.log('Created homepage_media_assets table.');
+  }
+
+  // Stores the currently published video/poster pair.
+  if (!(await db.schema.hasTable('homepage_media_state'))) {
+    await db.schema.createTable('homepage_media_state', t => {
+      t.integer('id').primary();
+      t.string('video_asset_id').nullable();
+      t.string('poster_asset_id').nullable();
+      t.timestamp('updated_at').notNullable().defaultTo(db.fn.now());
+    });
+
+    console.log('Created homepage_media_state table.');
+  }
+
+  // Ensure the singleton publishing state exists.
+  const homepageMediaState = await db('homepage_media_state')
+    .where({ id: 1 })
+    .first();
+
+  if (!homepageMediaState) {
+    await db('homepage_media_state').insert({
+      id: 1,
+      video_asset_id: null,
+      poster_asset_id: null
+    });
+  }
+
   console.log('✓ Migrations complete.');
 }
 

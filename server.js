@@ -45,6 +45,32 @@ app.use(express.urlencoded({ extended: true }));
 
 // ── Static files ──────────────────────────────────────────────
 // Serve the public HTML files
+// Short social tracking links
+const socialRedirects = {
+  instagram: { source: 'instagram', medium: 'social' },
+  facebook:  { source: 'facebook', medium: 'social' },
+  linkedin:  { source: 'linkedin', medium: 'social' },
+  youtube:   { source: 'youtube', medium: 'video' },
+  whatsapp:  { source: 'whatsapp', medium: 'messaging' },
+};
+
+app.get('/go/:platform', (req, res) => {
+  const tracking = socialRedirects[req.params.platform.toLowerCase()];
+
+  if (!tracking) {
+    return res.status(404).send('Tracking link not found');
+  }
+
+  const params = new URLSearchParams({
+    utm_source: tracking.source,
+    utm_medium: tracking.medium,
+    utm_campaign: 'website_profile',
+  });
+
+  return res.redirect(302, `/?${params.toString()}`);
+});
+
+// End short social tracking links
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/policies', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'policies.html'));
@@ -80,8 +106,9 @@ app.use('/api/trips',     require('./routes/trips'));
 app.use('/api/bookings',  require('./routes/bookings'));
 app.use('/api/leads',     require('./routes/leads'));
 app.use('/api/analytics', require('./routes/analytics'));
-app.use('/api/reviews',   require('./routes/reviews'));
-app.use('/api/upload',    requireAdmin, require('./routes/upload'));
+app.use('/api/reviews',        require('./routes/reviews'));
+app.use('/api/homepage-media', require('./routes/homepage-media'));
+app.use('/api/upload',         requireAdmin, require('./routes/upload'));
 
 // ── Cron — instance auto-creation ────────────────────────────
 // Runs on startup (retroactive) + daily at 00:05; started after the session store is ready.

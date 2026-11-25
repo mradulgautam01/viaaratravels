@@ -903,6 +903,15 @@
     }
 
     </style>
+<!-- Google Analytics 4 - Viaara Travels -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CT46CD4PQ9"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CT46CD4PQ9');
+</script>
+<!-- End Google Analytics 4 -->
 </head>
 <body>
 
@@ -970,19 +979,63 @@ function closeMobMenu(){document.getElementById('mobDrawer').classList.remove('o
 (function(){
   var v = document.getElementById('heroVideo');
   if(!v) return;
+
+  var fallbackVideo = '/media/hero-varanasi.mp4';
+  var fallbackPoster = '/media/optimized/hero-poster.webp';
+
   var wideEnough = window.matchMedia('(min-width:1101px)').matches;
   var wantsMotion = !window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  // Phones and reduced-motion users keep the poster and download nothing.
-  if(!wideEnough || !wantsMotion) return;
-  v.addEventListener('playing', function(){ v.classList.add('hero-video-playing'); });
-  v.addEventListener('emptied', function(){ v.classList.remove('hero-video-playing'); });
-  v.addEventListener('error', function(){ v.classList.remove('hero-video-playing'); });
-  v.src = '/media/hero-varanasi.mp4';
-  v.muted = true;                       // belt and braces: some browsers
-  v.play().catch(function(){            // ignore the attribute
-    v.removeAttribute('src');           // autoplay refused - fall back to poster
+
+  function applyMedia(videoUrl, posterUrl) {
+    var poster = posterUrl || fallbackPoster;
+    var video = videoUrl || fallbackVideo;
+
+    // Update the visible hero background and video poster.
+    var heroBg = document.querySelector('.hero-bg');
+    if(heroBg) {
+      heroBg.style.backgroundImage = 'url("' + poster + '")';
+    }
+
+    v.poster = poster;
+
+    // Phones, tablets and reduced-motion users download no video.
+    if(!wideEnough || !wantsMotion) return;
+
+    v.addEventListener('playing', function(){
+      v.classList.add('hero-video-playing');
+    });
+
+    v.addEventListener('emptied', function(){
+      v.classList.remove('hero-video-playing');
+    });
+
+    v.addEventListener('error', function(){
+      v.classList.remove('hero-video-playing');
+    });
+
+    v.muted = true;
+    v.src = video;
     v.load();
-  });
+
+    v.play().catch(function(){
+      v.removeAttribute('src');
+      v.load();
+    });
+  }
+
+  // Fetch the currently published homepage video/poster pair.
+  fetch('/api/homepage-media/public', { cache: 'no-store' })
+    .then(function(response){
+      if(!response.ok) throw new Error('Homepage media unavailable');
+      return response.json();
+    })
+    .then(function(data){
+      applyMedia(data.videoUrl, data.posterUrl);
+    })
+    .catch(function(err){
+      console.warn('[Viaara] Homepage media unavailable:', err);
+      applyMedia(fallbackVideo, fallbackPoster);
+    });
 })();
 </script>
 
