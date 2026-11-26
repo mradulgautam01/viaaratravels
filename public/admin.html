@@ -686,6 +686,10 @@ td:first-child{padding-left:1.125rem;}
                 <div class="ov-legend-item"><div class="ov-legend-dot" style="background:#1f7a4a;width:16px;height:3px;"></div> Active Users</div>
                 <div class="ov-legend-item"><div class="ov-legend-dot" style="background:#1a6fa8;width:16px;height:3px;"></div> Page Views</div>
               </div>
+              <div id="ga4LastUpdated"
+                   style="font-size:0.75rem;color:var(--text-m);text-align:right;padding:0.5rem 0.25rem;">
+                Waiting for analytics...
+              </div>
             </div>
 
             <!-- Traffic Sources -->
@@ -1510,6 +1514,16 @@ async function loadGA4Analytics(period = activePeriod) {
 
     initChart(data.chart);
     renderGA4TrafficSources(data.trafficSources);
+
+    const updatedEl = document.getElementById('ga4LastUpdated');
+
+    if (updatedEl) {
+      const updated = new Date(data.updatedAt);
+
+      updatedEl.textContent = Number.isNaN(updated.getTime())
+        ? 'Last updated: unavailable'
+        : `Last updated: ${updated.toLocaleString()}`;
+    }
 
   } catch (error) {
     console.error('Unable to load GA4 analytics:', error);
