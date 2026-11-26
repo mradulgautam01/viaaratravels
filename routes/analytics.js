@@ -5,6 +5,7 @@
 const express = require('express');
 const db = require('../db/db');
 const { requireAdmin, publicWriteLimiter } = require('../lib/auth');
+const { BetaAnalyticsDataClient } = require('@google-analytics/data');
 
 const router = express.Router();
 
@@ -112,6 +113,125 @@ router.get('/summary', requireAdmin, async (req, res) => {
     res.json(result);
   } catch (err) {
     sendServerError(res, 'get analytics summary', err);
+  }
+});
+
+// GET /api/analytics/ga4 — Google Analytics reporting
+router.get('/ga4', requireAdmin, async (req, res) => {
+  try {
+    const period = Number(req.query.days || 30);
+
+    if (![7, 30, 90].includes(period)) {
+      return res.status(400).json({ error: 'days must be 7, 30, or 90' });
+    }
+
+    const propertyId = process.env.GA4_PROPERTY_ID;
+    if (!propertyId) {
+      return res.status(500).json({ error: 'GA4 property is not configured' });
+    }
+
+    const client = new BetaAnalyticsDataClient();
+    const property = `properties/${propertyId}`;
+    const dateRanges = [{
+      startDate: `${period}daysAgo`,
+      endDate: 'today'
+    }];
+
+    // Summary: unique users are calculated across the entire period.
+    const [summary] = await client.runReport({
+      property,
+      dateRanges,
+      metrics: [
+        { name: 'totalUsers' },
+        { name: 'activeUsers' },
+        { name: 'newUsers' },
+        { name: 'screenPageViews' },
+        { name: 'sessions' },
+        { name: 'engagementRate' },
+        { name: 'userEngagementDuration' }
+      ]
+    });
+
+    const values = summary.rows?.[0]?.metricValues || [];
+    const number = index => Number(values[index]?.value || 0);
+
+    // Daily report: chart values, not used to calculate unique period totals.
+    const [daily] = await client.runReport({
+      property,
+      dateRanges,
+      dimensions: [{ name: 'date' }],
+      metrics: [
+        { name: 'screenPageViews' },
+        { name: 'activeUsers' },
+        { name: 'sessions' }
+      ],
+      orderBys: [{ dimension: { dimensionName: 'date' } }]
+    });
+
+    const chart = (daily.rows || []).map(row => {
+      const v = row.metricValues || [];
+      const rawDate = row.dimensionValues?.[0]?.value || '';
+      const date = rawDate.length === 8
+        ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}`
+        : rawDate;
+
+      return {
+        date,
+        pageViews: Number(v[0]?.value || 0),
+        activeUsers: Number(v[1]?.value || 0),
+        sessions: Number(v[2]?.value || 0)
+      };
+    });
+
+    // Traffic sources: sessions grouped by GA4 default channel.
+    const [sourceReport] = await client.runReport({
+      property,
+      dateRanges,
+      dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+      metrics: [{ name: 'sessions' }],
+      orderBys: [
+        { metric: { metricName: 'sessions' }, desc: true }
+      ],
+      limit: 10
+    });
+
+    const sourceRows = (sourceReport.rows || []).map(row => ({
+      channel: row.dimensionValues?.[0]?.value || '(not set)',
+      sessions: Number(row.metricValues?.[0]?.value || 0)
+    }));
+
+    const totalSourceSessions = sourceRows.reduce(
+      (sum, row) => sum + row.sessions, 0
+    );
+
+    const trafficSources = sourceRows.map(row => ({
+      ...row,
+      percentage: totalSourceSessions
+        ? Number((row.sessions / totalSourceSessions * 100).toFixed(2))
+        : 0
+    }));
+
+    res.set('Cache-Control', 'private, no-store');
+
+    res.json({
+      period,
+      users: number(0),
+      activeUsers: number(1),
+      newUsers: number(2),
+      pageViews: number(3),
+      sessions: number(4),
+      engagementRate: number(5),
+      averageEngagementTime: number(6) / Math.max(number(1), 1),
+      chart,
+      trafficSources,
+      updatedAt: new Date().toISOString()
+    });
+
+  } catch (err) {
+    console.error('[GA4] Reporting failed:', err);
+    res.status(500).json({
+      error: 'Unable to retrieve GA4 analytics'
+    });
   }
 });
 
