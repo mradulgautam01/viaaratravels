@@ -51,6 +51,307 @@
       .policy-section{scroll-margin-top:7rem;}
     }
     @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+
+    /* Shared Viaara enquiry components */
+    .enq-fab{
+      position:fixed;
+      right:0;
+      top:50%;
+      transform:translateY(-50%);
+      z-index:9002;
+      background:#1f7a4a;
+      color:#fff;
+      writing-mode:vertical-rl;
+      text-orientation:mixed;
+      padding:1.25rem 0.75rem;
+      font-family:"Inter",sans-serif;
+      font-size:0.8125rem;
+      font-weight:700;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      cursor:pointer;
+      border:none;
+      border-radius:0;
+      box-shadow:-3px 0 16px rgba(0,0,0,0.15);
+      transition:background 0.2s,padding 0.2s;
+    }
+    .enq-fab:hover{background:#155433;padding-right:1rem;}
+    .enq-overlay{
+      position:fixed;
+      inset:0;
+      z-index:9003;
+      background:rgba(0,0,0,0.6);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .enq-overlay.open{display:flex;}
+    .enq-modal{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      width:min(560px,100%);
+      max-height:90vh;
+      overflow:hidden;
+      background:#fff;
+      color:#0f1311;
+      box-shadow:0 20px 60px rgba(0,0,0,0.25);
+    }
+    .enq-header{
+      position:relative;
+      flex-shrink:0;
+      background:#0f1913;
+      color:#fff;
+      padding:1.5rem;
+    }
+    .enq-header h2{
+      color:#fff;
+      font-family:"Fraunces",Georgia,serif;
+      font-size:1.8rem;
+      margin:0 2rem 0.25rem 0;
+    }
+    .enq-header p{font-size:0.85rem;margin:0;color:rgba(255,255,255,0.75);}
+    .enq-close{
+      position:absolute;
+      top:14px;
+      right:14px;
+      border:0;
+      background:transparent;
+      color:#fff;
+      font-size:1.4rem;
+      cursor:pointer;
+    }
+    .enq-body{
+      padding:1.5rem;
+      overflow-y:auto;
+      min-height:0;
+    }
+    .enq-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+    .enq-field{margin-bottom:1rem;}
+    .enq-field label{
+      display:block;
+      font-size:0.78rem;
+      font-weight:700;
+      margin-bottom:0.35rem;
+    }
+    .enq-field input,.enq-field select,.enq-field textarea{
+      width:100%;
+      padding:0.75rem;
+      border:1px solid #d5d9d6;
+      border-radius:3px;
+      background:#fff;
+      color:#0f1311;
+      font:inherit;
+      font-size:0.9rem;
+    }
+    .enq-field textarea{min-height:90px;resize:vertical;}
+    .enq-field input:focus,.enq-field select:focus,.enq-field textarea:focus{
+      outline:2px solid #1f7a4a;
+      outline-offset:1px;
+    }
+    .enq-submit{
+      width:100%;
+      padding:0.9rem;
+      border:0;
+      background:#1f7a4a;
+      color:#fff;
+      font:inherit;
+      font-weight:700;
+      cursor:pointer;
+    }
+    .enq-submit:hover{background:#155433;}
+    .enq-submit:disabled{opacity:0.65;cursor:wait;}
+    .enq-error{color:#c0675a;font-size:0.85rem;margin-bottom:0.75rem;}
+    .enq-success{text-align:center;padding:2rem 0;}
+    .enq-success-icon{font-size:2rem;margin-bottom:0.75rem;}
+    .enq-success h3{font-family:"Fraunces",Georgia,serif;color:#1f7a4a;font-size:1.5rem;}
+    @media(max-width:640px){
+      .enq-fab{display:none;}
+      .enq-row{grid-template-columns:1fr;gap:0;}
+      .enq-body{padding:1.1rem;}
+    }
+
+    /* Match Homepage and Upcoming Trips enquiry modal */
+    .enq-modal{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      width:min(720px,100%);
+      max-height:90vh;
+      overflow:hidden;
+      background:#fff;
+      color:#0f1311;
+      box-shadow:0 20px 60px rgba(0,0,0,0.25);
+      border-radius:0;
+    }
+    .enq-header{
+      position:relative;
+      flex-shrink:0;
+      background:#1f7a4a;
+      color:#fff;
+      padding:2rem 2.5rem;
+    }
+    .enq-header h2{
+      color:#fff;
+      font-family:"Inter",sans-serif;
+      font-size:1.7rem;
+      font-weight:800;
+      line-height:1.3;
+      letter-spacing:-0.02em;
+      margin:0 2.5rem 0.25rem 0;
+    }
+    .enq-header p{
+      font-family:"Inter",sans-serif;
+      font-size:0.95rem;
+      color:rgba(255,255,255,0.85);
+      margin:0;
+    }
+    .enq-close{
+      position:absolute;
+      top:1.25rem;
+      right:1.5rem;
+      border:0;
+      background:transparent;
+      color:#fff;
+      font-size:2rem;
+      font-weight:300;
+      cursor:pointer;
+    }
+    .enq-body{
+      padding:2.5rem;
+      overflow-y:auto;
+      min-height:0;
+      background:#fff;
+    }
+    .enq-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1.5rem;
+    }
+    .enq-field{
+      margin-bottom:1.5rem;
+    }
+    .enq-field label{
+      display:block;
+      font-family:"Inter",sans-serif;
+      font-size:0.78rem;
+      font-weight:800;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:#555d58;
+      margin-bottom:0.75rem;
+    }
+    .enq-field input,
+    .enq-field select,
+    .enq-field textarea{
+      width:100%;
+      padding:0.9rem 1.1rem;
+      min-height:59px;
+      border:1px solid #d5d9d6;
+      border-radius:0;
+      background:#fafafa;
+      color:#0f1311;
+      font-family:"Inter",sans-serif;
+      font-size:1rem;
+    }
+    .enq-field textarea{
+      min-height:135px;
+      resize:vertical;
+    }
+    .enq-submit{
+      display:block;
+      width:100%;
+      min-height:74px;
+      padding:1.1rem;
+      border:0;
+      border-radius:0;
+      background:#1f7a4a;
+      color:#fff;
+      font-family:"Inter",sans-serif;
+      font-size:1.05rem;
+      font-weight:800;
+      cursor:pointer;
+      transition:background 0.2s;
+    }
+    .enq-submit:hover{
+      background:#155433;
+    }
+    .enq-submit:disabled{
+      opacity:0.65;
+      cursor:wait;
+    }
+    @media(max-width:640px){
+      .enq-modal{
+        width:100%;
+        max-height:92vh;
+      }
+      .enq-header{
+        padding:1.5rem;
+      }
+      .enq-header h2{
+        font-size:1.4rem;
+      }
+      .enq-body{
+        padding:1.5rem;
+      }
+      .enq-row{
+        grid-template-columns:1fr;
+        gap:0;
+      }
+      .enq-submit{
+        min-height:60px;
+      }
+    }
+
+    /* Refine modal proportions */
+    .enq-modal{
+      width:min(620px, 94%);
+      max-height:88vh;
+    }
+    .enq-header{
+      padding:1.25rem 1.75rem;
+    }
+    .enq-header h2{
+      font-size:1.4rem;
+    }
+    .enq-header p{
+      font-size:0.85rem;
+    }
+    .enq-body{
+      padding:1.75rem;
+    }
+    .enq-row{
+      gap:1.25rem;
+    }
+    .enq-field{
+      margin-bottom:1.1rem;
+    }
+    .enq-field label{
+      font-size:0.72rem;
+      margin-bottom:0.5rem;
+    }
+    .enq-field input,
+    .enq-field select,
+    .enq-field textarea{
+      min-height:48px;
+      padding:0.7rem 0.9rem;
+      font-size:0.9rem;
+    }
+    .enq-field textarea{
+      min-height:100px;
+    }
+    .enq-submit{
+      min-height:58px;
+      padding:0.9rem;
+      font-size:0.95rem;
+    }
+    @media(max-width:640px){
+      .enq-modal{width:100%;max-height:92vh;}
+      .enq-header{padding:1.1rem 1.25rem;}
+      .enq-body{padding:1.25rem;}
+      .enq-row{grid-template-columns:1fr;gap:0;}
+    }
   </style>
 <!-- Google Analytics 4 - Viaara Travels -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-CT46CD4PQ9"></script>
@@ -304,6 +605,19 @@
     <p><em>You go, we plan.</em></p>
   </section>
 </main>
+<button class="enq-fab" onclick="openEnq()">Enquire Now</button>
+
+<div class="enq-overlay" id="enqOverlay" onclick="if(event.target===this)closeEnq()">
+  <div class="enq-modal">
+    <div class="enq-header">
+      <h2>Plan Your Journey</h2>
+      <p>Tell us where you'd like to go. We'll get back to you within 24 hours.</p>
+      <button class="enq-close" onclick="closeEnq()" aria-label="Close">&times;</button>
+    </div>
+    <div class="enq-body" id="enqFormWrap"></div>
+  </div>
+</div>
+
 <footer class="page-footer"><a href="#top">Back to top &uarr;</a></footer>
 <script>
   const policySelector = document.getElementById('policy-selector');
@@ -311,6 +625,139 @@
     if (policySelector.value) window.location.hash = policySelector.value;
     policySelector.value = '';
   });
+</script>
+<script>
+let policyTrips = [];
+
+async function loadPolicyTrips(){
+  try {
+    const response = await fetch('/api/trips/public');
+    if(!response.ok) throw new Error('Could not load trips');
+
+    const data = await response.json();
+    policyTrips = Array.isArray(data) ? data : [];
+  } catch(error) {
+    console.warn('[Viaara] Could not load public trips:', error);
+    policyTrips = [];
+  }
+}
+
+function buildPolicyTripOptions(){
+  let options = '<option value="">Select a destination...</option>';
+
+  policyTrips.forEach(trip => {
+    const title = String(trip.title || '');
+    const escaped = title.replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    options += `<option value="${escaped}">${escaped}</option>`;
+  });
+
+  options += '<option value="Not sure yet">Not sure yet — help me choose</option>';
+  return options;
+}
+
+async function openEnq(){
+  await loadPolicyTrips();
+  document.getElementById('enqFormWrap').innerHTML = `
+    <form onsubmit="submitPolicyEnq(event)">
+      <div class="enq-row">
+        <div class="enq-field">
+          <label>Name</label>
+          <input type="text" placeholder="Your name" required>
+        </div>
+        <div class="enq-field">
+          <label>Phone</label>
+          <input type="tel" placeholder="+91 XXXXX XXXXX" required>
+        </div>
+      </div>
+      <div class="enq-field">
+        <label>Email</label>
+        <input type="email" placeholder="you@email.com">
+      </div>
+      <div class="enq-field">
+        <label>Trip of Interest</label>
+        <select required>${buildPolicyTripOptions()}</select>
+      </div>
+      <div class="enq-field">
+        <label>Message</label>
+        <textarea placeholder="Tell us about your travel plans, group size, dates..."></textarea>
+      </div>
+      <button type="submit" class="enq-submit">Send Enquiry</button>
+    </form>`;
+
+  document.getElementById('enqOverlay').classList.add('open');
+}
+
+function closeEnq(){
+  document.getElementById('enqOverlay').classList.remove('open');
+}
+
+async function submitPolicyEnq(event){
+  event.preventDefault();
+
+  const form = event.target;
+  const button = form.querySelector('.enq-submit');
+  const originalText = button.textContent;
+  const trip = form.querySelector('select').value || 'Not specified';
+
+  const matchedTrip = policyTrips.find(t => t.title === trip);
+
+  const lead = {
+    name: form.querySelector('input[type="text"]').value.trim(),
+    phone: form.querySelector('input[type="tel"]').value.trim(),
+    email: form.querySelector('input[type="email"]').value.trim(),
+    trip,
+    message: form.querySelector('textarea').value.trim()
+  };
+
+  if(matchedTrip && matchedTrip.id != null){
+    lead.tripId = String(matchedTrip.id);
+  }
+
+  let errorEl = form.querySelector('.enq-error');
+
+  if(!errorEl){
+    errorEl = document.createElement('div');
+    errorEl.className = 'enq-error';
+    form.insertBefore(errorEl, button);
+  }
+
+  errorEl.style.display = 'none';
+  button.disabled = true;
+  button.textContent = 'Sending...';
+
+  try {
+    const response = await fetch('/api/leads', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(lead)
+    });
+
+    const result = await response.json().catch(() => ({}));
+
+    if(response.status !== 201 || !result.ok){
+      throw new Error(result.error || 'Unable to submit. Please try again.');
+    }
+
+    document.getElementById('enqFormWrap').innerHTML = `
+      <div class="enq-success">
+        <div class="enq-success-icon">&#9989;</div>
+        <h3>We've got your enquiry!</h3>
+        <p>Our team will reach out within 24 hours.</p>
+      </div>`;
+
+  } catch(error) {
+    errorEl.textContent = error.message;
+    errorEl.style.display = 'block';
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
+
+loadPolicyTrips();
 </script>
 </body>
 </html>

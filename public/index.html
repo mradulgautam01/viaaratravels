@@ -1892,7 +1892,7 @@ function buildEnqForm(selected){
         <div class="enq-field"><label>Phone</label><input type="tel" placeholder="+91 XXXXX XXXXX" required></div>
       </div>
       <div class="enq-field"><label>Email</label><input type="email" placeholder="you@email.com"></div>
-      <div class="enq-field"><label>Trip of Interest</label><select>${buildTripOptions(selected)}</select></div>
+      <div class="enq-field"><label>Trip of Interest</label><select id="enqTrip" required>${buildTripOptions(selected)}</select></div>
       <div class="enq-field"><label>Message</label><textarea placeholder="Tell us about your travel plans, group size, dates..."></textarea></div>
       <button type="submit" class="enq-submit">Send Enquiry →</button>
     </form>`;
